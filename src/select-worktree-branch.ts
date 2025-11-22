@@ -18,7 +18,7 @@ export async function selectWorktreeBranch(): Promise<string | undefined> {
     selectedBranch: string;
   }>([
     {
-      type: "list",
+      type: "select",
       name: "selectedBranch",
       message: "Select a worktree to remove:",
       choices: branches.map((branch) => ({
