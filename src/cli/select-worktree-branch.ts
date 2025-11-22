@@ -1,10 +1,10 @@
 /**
- * Interactively select a worktree branch to remove
+ * Interactively select a worktree branch to remove (CLI layer)
  */
 
 import inquirer from "inquirer";
 import chalk from "chalk";
-import { getWorktreeBranches } from "./get-worktree-branches.js";
+import { getWorktreeBranches } from "../git/get-worktree-branches.js";
 
 export async function selectWorktreeBranch(): Promise<string | undefined> {
   const branches = getWorktreeBranches();

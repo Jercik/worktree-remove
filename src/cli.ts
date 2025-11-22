@@ -15,8 +15,8 @@
 import { Command } from "commander";
 import chalk from "chalk";
 import packageJson from "../package.json" with { type: "json" };
-import { removeWorktree } from "./remove-worktree.js";
-import { selectWorktreeBranch } from "./select-worktree-branch.js";
+import { removeWorktree } from "./worktree/remove-worktree.js";
+import { selectWorktreeBranch } from "./cli/select-worktree-branch.js";
 
 const program = new Command()
   .name(packageJson.name)
