@@ -3,7 +3,7 @@
   "author": "Łukasz Jerciński",
   "license": "MIT",
   "version": "1.0.0",
-  "description": "",
+  "description": "Safely remove Git worktrees and their directories, handling uncommitted changes and orphaned folders.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Jercik/worktree-remove.git"
@@ -39,7 +39,19 @@
     "knip": "knip",
     "fta:check": "fta-check --threshold 55"
   },
-  "keywords": [],
+  "keywords": [
+    "git",
+    "worktree",
+    "git-worktree",
+    "remove",
+    "delete",
+    "safe-delete",
+    "cli",
+    "cleanup",
+    "trash",
+    "workflow",
+    "branch"
+  ],
   "packageManager": "pnpm@10.22.0",
   "engines": {
     "node": ">=22.14.0"
