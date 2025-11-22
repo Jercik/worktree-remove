@@ -1,5 +1,12 @@
 /**
- * Main worktree removal logic
+ * Main worktree removal use case (domain layer).
+ *
+ * Orchestrates:
+ * - Validating execution from the main worktree
+ * - Resolving the target worktree path
+ * - Guard rails around uncommitted changes
+ * - Unregistering the worktree
+ * - Moving the directory to trash
  */
 
 import path from "node:path";
@@ -7,12 +14,12 @@ import {
   exitWithMessage,
   normalizeBranchName,
   confirm,
-} from "./git-helpers.js";
-import { getWorktreeInfo } from "./get-worktree-info.js";
-import { hasUncommittedChanges } from "./check-uncommitted-changes.js";
-import { unregisterWorktree } from "./unregister-worktree.js";
-import { directoryExists } from "./check-directory-exists.js";
-import { trashDirectory } from "./trash-directory.js";
+} from "../git/git-helpers.js";
+import { getWorktreeInfo } from "../git/get-worktree-info.js";
+import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
+import { unregisterWorktree } from "../git/unregister-worktree.js";
+import { directoryExists } from "../fs/check-directory-exists.js";
+import { trashDirectory } from "../fs/trash-directory.js";
 
 export async function removeWorktree(inputBranch: string): Promise<void> {
   const targetBranch = normalizeBranchName(inputBranch);
@@ -62,7 +69,7 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
     hasUncommittedChanges(registeredPath)
   ) {
     const proceed = await confirm(
-      `Worktree has uncommitted changes. Remove anyway?`,
+      "Worktree has uncommitted changes. Remove anyway?",
     );
     if (!proceed) {
       console.log("Removal cancelled.");
