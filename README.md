@@ -7,13 +7,14 @@ Safely remove a Git worktree and its directory, handling uncommitted changes and
 Running `worktree-remove` from inside the main repo:
 
 1.  Ensures you are running from the main worktree.
-2.  Finds the worktree directory (expects conventions like `../<repo>-<branch>`).
+2.  Finds the worktree directory in the parent directory (expects `<repo>-<branch>` naming).
 3.  Checks if the worktree is registered with Git.
-4.  Safely handles "orphaned" directories (directories that exist but aren't registered worktrees).
-5.  Checks for uncommitted changes (if registered) and asks for confirmation before proceeding.
-6.  Unregisters the worktree from Git (`git worktree remove`).
-7.  Moves the directory to the system trash instead of permanently deleting it (safer than `rm -rf`).
-8.  Verifies the removal was successful.
+4.  Safely handles "orphaned" directories (directories that exist but Git no longer recognizes as worktrees).
+5.  Checks for uncommitted changes (if registered) and, when found, asks "Remove anyway?" before proceeding.
+6.  Asks for a final confirmation to remove the registered worktree or orphaned directory.
+7.  Unregisters the worktree from Git (`git worktree remove`).
+8.  Moves the directory to the system trash instead of permanently deleting it (safer than `rm -rf`).
+9.  Verifies the removal was successful.
 
 ## Requirements
 
@@ -26,7 +27,7 @@ You usually don’t need a global install.
 
 ```bash
 # inside /my/path/my-app (main worktree)
-# one‑off
+# one-off
 npx worktree-remove
 
 # or install globally

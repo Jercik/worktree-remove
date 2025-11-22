@@ -42,8 +42,11 @@
   "keywords": [
     "git",
     "worktree",
+    "git-worktree",
     "remove",
     "delete",
+    "safe-delete",
+    "cli",
     "cleanup",
     "trash",
     "workflow",
