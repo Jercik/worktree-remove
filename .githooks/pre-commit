@@ -25,7 +25,7 @@ fi
 
 git diff --cached --name-only --diff-filter=ACMR -z \
   | xargs -0 bash -c 'for f; do [[ -L "$f" ]] || printf "%s\0" "$f"; done' _ \
-  | xargs -0 "${PRETTIER_CMD[@]}" --write --ignore-unknown --log-level warn --
+  | xargs -0 -r "${PRETTIER_CMD[@]}" --write --ignore-unknown --log-level warn --
 git update-index --again
 
 run_script() {
@@ -56,10 +56,11 @@ run_script "fta"
 
 # Run tests quietly - only show output on failure
 test_log=$(mktemp)
+trap 'rm -f "$test_log"' EXIT
+
 if run_script "test" > "$test_log" 2>&1; then
-  rm "$test_log"
+  : # Success, stay silent
 else
   cat "$test_log" >&2
-  rm "$test_log"
   exit 1
 fi
