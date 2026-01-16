@@ -50,6 +50,7 @@ const program = new Command()
         await removeWorktree(targetBranch);
       } catch (error: unknown) {
         console.error(chalk.red("Error:"), error);
+        // eslint-disable-next-line require-atomic-updates
         process.exitCode = 1;
       }
     },
