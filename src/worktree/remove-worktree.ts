@@ -21,7 +21,15 @@ import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
 
-export async function removeWorktree(inputBranch: string): Promise<void> {
+type RemoveWorktreeOptions = {
+  skipConfirmations?: boolean;
+};
+
+export async function removeWorktree(
+  inputBranch: string,
+  options: RemoveWorktreeOptions = {},
+): Promise<void> {
+  const { skipConfirmations = false } = options;
   const targetBranch = normalizeBranchName(inputBranch);
 
   // Get worktree information
@@ -64,6 +72,7 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
 
   // Check for uncommitted changes if it's a registered worktree
   if (
+    !skipConfirmations &&
     registeredPath &&
     directoryExists_ &&
     hasUncommittedChanges(registeredPath)
@@ -79,13 +88,15 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
 
   // Get user confirmation
   const status = registeredPath ? "registered worktree" : "orphaned directory";
-  const confirmed = await confirm(
-    `Remove ${status} '${targetDirectoryName}' (branch ${targetBranch})?`,
-  );
+  if (!skipConfirmations) {
+    const confirmed = await confirm(
+      `Remove ${status} '${targetDirectoryName}' (branch ${targetBranch})?`,
+    );
 
-  if (!confirmed) {
-    console.log("Removal cancelled.");
-    return;
+    if (!confirmed) {
+      console.log("Removal cancelled.");
+      return;
+    }
   }
 
   console.log(`➤ Removing ${status} '${targetDirectoryName}'...`);
@@ -112,9 +123,10 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
     console.log("  ✓ Directory was removed by Git");
   } else if (directoryExistsNow) {
     // Directory still exists, offer to trash it
-    const trashConfirmed = registeredPath
-      ? await confirm(`Move directory '${targetDirectoryName}' to trash?`)
-      : true; // Always trash orphaned directories if user confirmed above
+    const trashConfirmed =
+      skipConfirmations ||
+      !registeredPath || // Always trash orphaned directories if user confirmed above
+      (await confirm(`Move directory '${targetDirectoryName}' to trash?`));
 
     if (trashConfirmed) {
       console.log("  • Moving directory to trash...");

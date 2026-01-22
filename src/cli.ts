@@ -24,8 +24,12 @@ const program = new Command()
   .version(packageJson.version)
   .argument("[branch]", "branch name of the worktree to remove")
   .option("-i, --interactive", "interactively select a worktree to remove")
+  .option("-y, --yes", "skip confirmation prompts")
   .action(
-    async (branch: string | undefined, options: { interactive?: boolean }) => {
+    async (
+      branch: string | undefined,
+      options: { interactive?: boolean; yes?: boolean },
+    ) => {
       try {
         let targetBranch = branch;
 
@@ -47,7 +51,7 @@ const program = new Command()
           process.exit(1);
         }
 
-        await removeWorktree(targetBranch);
+        await removeWorktree(targetBranch, { skipConfirmations: options.yes });
       } catch (error: unknown) {
         console.error(chalk.red("Error:"), error);
         // eslint-disable-next-line require-atomic-updates
