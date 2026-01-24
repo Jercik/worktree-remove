@@ -16,10 +16,12 @@ export async function selectWorktreeBranch(): Promise<string | undefined> {
   }
 
   const cwd = process.cwd();
-  const choices = [...worktrees.entries()].map(([branch, worktreePath]) => ({
-    name: `${branch} (${path.relative(cwd, worktreePath)})`,
-    value: branch,
-  }));
+  const choices = [...worktrees.entries()]
+    .toSorted(([a], [b]) => a.localeCompare(b))
+    .map(([branch, worktreePath]) => ({
+      name: `${branch} (${path.relative(cwd, worktreePath)})`,
+      value: branch,
+    }));
 
   const { selectedBranch } = await inquirer.prompt<{
     selectedBranch: string;
