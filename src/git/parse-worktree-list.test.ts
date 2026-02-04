@@ -41,6 +41,29 @@ detached
     });
   });
 
+  it("parses NUL-separated porcelain output (git worktree list --porcelain -z)", () => {
+    const output =
+      "worktree /repo/main\0HEAD 1111111111111111111111111111111111111111\0branch refs/heads/main\0\0worktree /repo/wt-detached\0HEAD 3333333333333333333333333333333333333333\0detached\0\0";
+
+    expect(parseWorktreeListPorcelain(output)).toEqual({
+      mainPath: "/repo/main",
+      worktrees: [
+        {
+          path: "/repo/main",
+          head: "1111111111111111111111111111111111111111",
+          branch: "main",
+          isDetached: false,
+        },
+        {
+          path: "/repo/wt-detached",
+          head: "3333333333333333333333333333333333333333",
+          branch: undefined,
+          isDetached: true,
+        },
+      ],
+    });
+  });
+
   it("parses detached lines with trailing whitespace", () => {
     const output = `worktree /repo/wt-detached
 HEAD 3333333333333333333333333333333333333333

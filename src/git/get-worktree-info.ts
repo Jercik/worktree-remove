@@ -13,7 +13,13 @@ interface WorktreeInfo {
 }
 
 export function getWorktreeInfo(): WorktreeInfo {
-  const wtList = git("worktree", "list", "--porcelain");
+  const wtList = (() => {
+    try {
+      return git("worktree", "list", "--porcelain", "-z");
+    } catch {
+      return git("worktree", "list", "--porcelain");
+    }
+  })();
   const parsed = parseWorktreeListPorcelain(wtList);
 
   if (parsed.worktrees.length === 0 || !parsed.mainPath) {

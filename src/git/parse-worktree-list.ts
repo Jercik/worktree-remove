@@ -13,7 +13,7 @@ export type ParsedWorktreeList = {
 };
 
 export function parseWorktreeListPorcelain(output: string): ParsedWorktreeList {
-  const lines = output.split(/\n/u);
+  const lines = output.split(/\0|\n/u);
 
   const worktrees: WorktreeEntry[] = [];
   let current: WorktreeEntry | undefined;
