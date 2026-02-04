@@ -1,6 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import { normalizeBranchName } from "../git/git-helpers.js";
+import { normalizeGitPath } from "../git/normalize-git-path.js";
 import type { WorktreeEntry } from "../git/parse-worktree-list.js";
 
 export type ResolveWorktreeTargetInput = {
@@ -55,7 +56,9 @@ export function resolveWorktreeTarget(
 
   const resolvedInputPath = path.resolve(
     parameters.cwd,
-    isPathInput ? expandHomeDirectory(trimmedInput) : trimmedInput,
+    isPathInput
+      ? normalizeGitPath(expandHomeDirectory(trimmedInput))
+      : trimmedInput,
   );
 
   const mainRepoName = path.basename(parameters.mainPath);

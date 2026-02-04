@@ -3,6 +3,7 @@
  */
 
 import { git, exitWithMessage } from "./git-helpers.js";
+import { normalizeGitPath } from "./normalize-git-path.js";
 import { parseWorktreeListPorcelain } from "./parse-worktree-list.js";
 import type { WorktreeEntry } from "./parse-worktree-list.js";
 
@@ -19,5 +20,17 @@ export function getWorktreeInfo(): WorktreeInfo {
     exitWithMessage("Unable to determine main worktree from git worktree list");
   }
 
-  return { mainPath: parsed.mainPath, worktrees: parsed.worktrees.slice(1) };
+  const normalizedWorktrees: WorktreeEntry[] = parsed.worktrees.map(
+    (worktree) => ({
+      ...worktree,
+      path: normalizeGitPath(worktree.path),
+    }),
+  );
+
+  const mainPath = normalizedWorktrees[0]?.path ?? "";
+  if (!mainPath) {
+    exitWithMessage("Unable to determine main worktree from git worktree list");
+  }
+
+  return { mainPath, worktrees: normalizedWorktrees.slice(1) };
 }
