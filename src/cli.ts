@@ -30,6 +30,14 @@ const program = new Command()
   .action(
     async (target: string | undefined, options: { interactive?: boolean }) => {
       try {
+        if (options.interactive && target) {
+          console.log(
+            chalk.yellow(
+              `Ignoring target '${target}' because --interactive was specified.`,
+            ),
+          );
+        }
+
         const targetInput =
           options.interactive || !target ? await selectWorktree() : target;
 
