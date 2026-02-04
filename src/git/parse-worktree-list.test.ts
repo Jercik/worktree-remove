@@ -13,7 +13,7 @@ branch refs/heads/feature/foo
 
 worktree /repo/wt-detached
 HEAD 3333333333333333333333333333333333333333
-detached
+detached\t
 `;
 
     expect(parseWorktreeListPorcelain(output)).toEqual({
@@ -36,6 +36,85 @@ detached
           head: "3333333333333333333333333333333333333333",
           branch: undefined,
           isDetached: true,
+        },
+      ],
+    });
+  });
+
+  it("returns empty result for empty output", () => {
+    expect(parseWorktreeListPorcelain("")).toEqual({
+      mainPath: "",
+      worktrees: [],
+    });
+  });
+
+  it("parses a single worktree with no additional fields", () => {
+    expect(parseWorktreeListPorcelain("worktree /repo/main\n")).toEqual({
+      mainPath: "/repo/main",
+      worktrees: [
+        {
+          path: "/repo/main",
+          head: undefined,
+          branch: undefined,
+          isDetached: false,
+        },
+      ],
+    });
+  });
+
+  it("parses worktrees even when HEAD is missing", () => {
+    const output = `worktree /repo/wt
+branch refs/heads/feature/foo
+`;
+
+    expect(parseWorktreeListPorcelain(output)).toEqual({
+      mainPath: "/repo/wt",
+      worktrees: [
+        {
+          path: "/repo/wt",
+          head: undefined,
+          branch: "feature/foo",
+          isDetached: false,
+        },
+      ],
+    });
+  });
+
+  it("ignores lines before the first worktree block", () => {
+    const output = `HEAD 1111111111111111111111111111111111111111
+branch refs/heads/main
+
+worktree /repo/main
+HEAD 1111111111111111111111111111111111111111
+branch refs/heads/main
+`;
+
+    expect(parseWorktreeListPorcelain(output)).toEqual({
+      mainPath: "/repo/main",
+      worktrees: [
+        {
+          path: "/repo/main",
+          head: "1111111111111111111111111111111111111111",
+          branch: "main",
+          isDetached: false,
+        },
+      ],
+    });
+  });
+
+  it("treats bare worktrees as non-detached with no branch", () => {
+    const output = `worktree /repo/bare
+bare
+`;
+
+    expect(parseWorktreeListPorcelain(output)).toEqual({
+      mainPath: "/repo/bare",
+      worktrees: [
+        {
+          path: "/repo/bare",
+          head: undefined,
+          branch: undefined,
+          isDetached: false,
         },
       ],
     });

@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import os from "node:os";
+import { describe, it, expect, vi } from "vitest";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 
 describe("resolveWorktreeTarget", () => {
@@ -144,13 +145,27 @@ describe("resolveWorktreeTarget", () => {
 
     expect(result).toEqual({
       kind: "candidates",
-      candidatePaths: [
-        "/Users/acme/repo-feature/bar",
-        "/Users/acme/feature/bar",
-      ],
+      candidatePaths: ["/Users/acme/repo-feature/bar"],
       resolvedInputPath: "/Users/acme/repo/feature/bar",
       isPathInput: false,
       input: "feature/bar",
+    });
+  });
+
+  it("returns candidate paths for orphaned directory name input", () => {
+    const result = resolveWorktreeTarget({
+      input: "orphan",
+      cwd: "/Users/acme/repo",
+      mainPath: "/Users/acme/repo",
+      worktrees: [],
+    });
+
+    expect(result).toEqual({
+      kind: "candidates",
+      candidatePaths: ["/Users/acme/repo-orphan", "/Users/acme/orphan"],
+      resolvedInputPath: "/Users/acme/repo/orphan",
+      isPathInput: false,
+      input: "orphan",
     });
   });
 
@@ -169,5 +184,26 @@ describe("resolveWorktreeTarget", () => {
       isPathInput: true,
       input: "../orphan",
     });
+  });
+
+  it("expands quoted tilde paths", () => {
+    const homedirSpy = vi.spyOn(os, "homedir").mockReturnValue("/Users/acme");
+
+    const result = resolveWorktreeTarget({
+      input: "~/repo-test-29",
+      cwd: "/Users/acme/repo",
+      mainPath: "/Users/acme/repo",
+      worktrees: [],
+    });
+
+    expect(result).toEqual({
+      kind: "candidates",
+      candidatePaths: ["/Users/acme/repo-test-29"],
+      resolvedInputPath: "/Users/acme/repo-test-29",
+      isPathInput: true,
+      input: "~/repo-test-29",
+    });
+
+    homedirSpy.mockRestore();
   });
 });

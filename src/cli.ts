@@ -30,24 +30,11 @@ const program = new Command()
   .action(
     async (target: string | undefined, options: { interactive?: boolean }) => {
       try {
-        let targetInput = target;
-
-        if (options.interactive || !targetInput) {
-          // Interactive mode: show list of worktrees
-          targetInput = await selectWorktree();
-
-          if (!targetInput) {
-            process.exit(0);
-          }
-        }
+        const targetInput =
+          options.interactive || !target ? await selectWorktree() : target;
 
         if (!targetInput) {
-          console.error(
-            chalk.red(
-              "No target specified. Use --interactive or provide a branch name or path.",
-            ),
-          );
-          process.exit(1);
+          process.exit(0);
         }
 
         await removeWorktree(targetInput);

@@ -48,7 +48,7 @@ export function parseWorktreeListPorcelain(output: string): ParsedWorktreeList {
       continue;
     }
 
-    if (line === "detached") {
+    if (line.trim() === "detached") {
       current.isDetached = true;
       current.branch = undefined;
       continue;

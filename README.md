@@ -60,6 +60,8 @@ You can also specify the worktree directly by:
 - worktree path (works for detached HEAD worktrees)
 - directory name in the parent folder (useful when there's no branch)
 
+Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation.
+
 ```bash
 worktree-remove <target>
 ```

@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 import { normalizeBranchName } from "../git/git-helpers.js";
 import type { WorktreeEntry } from "../git/parse-worktree-list.js";
@@ -22,8 +23,14 @@ export type ResolvedWorktreeTarget =
 
 function looksLikePathInput(input: string): boolean {
   if (input === "") return false;
-  if (input.startsWith(".") || input.startsWith("~")) return true;
+  if (input.startsWith(".")) return true;
+  if (input.startsWith("~/") || input.startsWith("~\\")) return true;
   return path.isAbsolute(input) || path.win32.isAbsolute(input);
+}
+
+function expandHomeDirectory(input: string): string {
+  if (!input.startsWith("~/") && !input.startsWith("~\\")) return input;
+  return path.join(os.homedir(), input.slice(2));
 }
 
 export function resolveWorktreeTarget(
@@ -46,7 +53,10 @@ export function resolveWorktreeTarget(
     ? undefined
     : normalizeBranchName(trimmedInput);
 
-  const resolvedInputPath = path.resolve(parameters.cwd, trimmedInput);
+  const resolvedInputPath = path.resolve(
+    parameters.cwd,
+    isPathInput ? expandHomeDirectory(trimmedInput) : trimmedInput,
+  );
 
   const mainRepoName = path.basename(parameters.mainPath);
   const parentDirectory = path.dirname(parameters.mainPath);
@@ -55,9 +65,13 @@ export function resolveWorktreeTarget(
     ? path.join(parentDirectory, `${mainRepoName}-${normalizedBranch}`)
     : undefined;
 
-  const siblingPath = isPathInput
-    ? undefined
-    : path.join(parentDirectory, trimmedInput);
+  const hasPathSeparator =
+    trimmedInput.includes(path.posix.sep) ||
+    trimmedInput.includes(path.win32.sep);
+  const siblingPath =
+    isPathInput || hasPathSeparator
+      ? undefined
+      : path.join(parentDirectory, trimmedInput);
 
   if (normalizedBranch) {
     const byBranch = worktreesByBranch.get(normalizedBranch);

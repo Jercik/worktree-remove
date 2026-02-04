@@ -18,11 +18,6 @@ import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 
-function shortHash(hash: string | undefined): string | undefined {
-  if (!hash) return undefined;
-  return hash.length <= 7 ? hash : hash.slice(0, 7);
-}
-
 export async function removeWorktree(input: string): Promise<void> {
   const trimmedInput = input.trim();
   if (!trimmedInput) {
@@ -111,7 +106,7 @@ export async function removeWorktree(input: string): Promise<void> {
     if (!registeredWorktreeFinal || !registeredPath) return "";
     if (registeredWorktreeFinal.branch)
       return ` (branch ${registeredWorktreeFinal.branch})`;
-    const head = shortHash(registeredWorktreeFinal.head);
+    const head = registeredWorktreeFinal.head?.slice(0, 7);
     return head ? ` (detached HEAD @ ${head})` : " (detached HEAD)";
   })();
 

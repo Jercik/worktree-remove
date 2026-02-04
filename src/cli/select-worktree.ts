@@ -7,11 +7,6 @@ import inquirer from "inquirer";
 import chalk from "chalk";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 
-function shortHash(hash: string | undefined): string | undefined {
-  if (!hash) return undefined;
-  return hash.length <= 7 ? hash : hash.slice(0, 7);
-}
-
 export async function selectWorktree(): Promise<string | undefined> {
   const { worktrees } = getWorktreeInfo();
 
@@ -25,7 +20,7 @@ export async function selectWorktree(): Promise<string | undefined> {
     .toSorted((a, b) => (a.branch ?? a.path).localeCompare(b.branch ?? b.path))
     .map((worktree) => {
       const relativePath = path.relative(cwd, worktree.path);
-      const head = shortHash(worktree.head);
+      const head = worktree.head?.slice(0, 7);
       const detachedLabel = head && `detached @ ${head}`;
       const label = worktree.branch ?? `(${detachedLabel ?? "detached"})`;
 
