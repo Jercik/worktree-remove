@@ -13,7 +13,7 @@ branch refs/heads/feature/foo
 
 worktree /repo/wt-detached
 HEAD 3333333333333333333333333333333333333333
-detached\t
+detached
 `;
 
     expect(parseWorktreeListPorcelain(output)).toEqual({
@@ -31,6 +31,25 @@ detached\t
           branch: "feature/foo",
           isDetached: false,
         },
+        {
+          path: "/repo/wt-detached",
+          head: "3333333333333333333333333333333333333333",
+          branch: undefined,
+          isDetached: true,
+        },
+      ],
+    });
+  });
+
+  it("parses detached lines with trailing whitespace", () => {
+    const output = `worktree /repo/wt-detached
+HEAD 3333333333333333333333333333333333333333
+detached\t
+`;
+
+    expect(parseWorktreeListPorcelain(output)).toEqual({
+      mainPath: "/repo/wt-detached",
+      worktrees: [
         {
           path: "/repo/wt-detached",
           head: "3333333333333333333333333333333333333333",
