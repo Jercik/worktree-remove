@@ -1,0 +1,108 @@
+import path from "node:path";
+import { normalizeBranchName } from "../git/git-helpers.js";
+import type { WorktreeEntry } from "../git/parse-worktree-list.js";
+
+export type ResolveWorktreeTargetInput = {
+  input: string;
+  cwd: string;
+  mainPath: string;
+  worktrees: WorktreeEntry[];
+};
+
+export type ResolvedWorktreeTarget =
+  | { kind: "registered"; worktree: WorktreeEntry }
+  | {
+      kind: "candidates";
+      candidatePaths: string[];
+      resolvedInputPath: string;
+      isPathInput: boolean;
+      input: string;
+    }
+  | { kind: "ambiguous"; message: string };
+
+function looksLikePathInput(input: string): boolean {
+  if (input === "") return false;
+  if (input.startsWith(".") || input.startsWith("~")) return true;
+  return path.isAbsolute(input) || path.win32.isAbsolute(input);
+}
+
+export function resolveWorktreeTarget(
+  parameters: ResolveWorktreeTargetInput,
+): ResolvedWorktreeTarget {
+  const trimmedInput = parameters.input.trim();
+  const isPathInput = looksLikePathInput(trimmedInput);
+
+  const worktreesByBranch = new Map<string, WorktreeEntry>();
+  const worktreesByPath = new Map<string, WorktreeEntry>();
+
+  for (const worktree of parameters.worktrees) {
+    worktreesByPath.set(path.resolve(worktree.path), worktree);
+    if (worktree.branch) {
+      worktreesByBranch.set(worktree.branch, worktree);
+    }
+  }
+
+  const normalizedBranch = isPathInput
+    ? undefined
+    : normalizeBranchName(trimmedInput);
+
+  const resolvedInputPath = path.resolve(parameters.cwd, trimmedInput);
+
+  const mainRepoName = path.basename(parameters.mainPath);
+  const parentDirectory = path.dirname(parameters.mainPath);
+
+  const expectedPath = normalizedBranch
+    ? path.join(parentDirectory, `${mainRepoName}-${normalizedBranch}`)
+    : undefined;
+
+  const siblingPath = isPathInput
+    ? undefined
+    : path.join(parentDirectory, trimmedInput);
+
+  if (normalizedBranch) {
+    const byBranch = worktreesByBranch.get(normalizedBranch);
+    if (byBranch) {
+      return { kind: "registered", worktree: byBranch };
+    }
+  }
+
+  const directMatch =
+    worktreesByPath.get(path.resolve(resolvedInputPath)) ??
+    (expectedPath
+      ? worktreesByPath.get(path.resolve(expectedPath))
+      : undefined) ??
+    (siblingPath ? worktreesByPath.get(path.resolve(siblingPath)) : undefined);
+
+  if (directMatch) {
+    return { kind: "registered", worktree: directMatch };
+  }
+
+  const basenameMatches = parameters.worktrees.filter(
+    (worktree) => path.basename(worktree.path) === trimmedInput,
+  );
+
+  if (basenameMatches.length === 1 && basenameMatches[0]) {
+    return { kind: "registered", worktree: basenameMatches[0] };
+  }
+
+  if (basenameMatches.length > 1) {
+    return {
+      kind: "ambiguous",
+      message: `Multiple worktrees match '${trimmedInput}'. Re-run with --interactive or pass a full path.`,
+    };
+  }
+
+  const candidatePaths = isPathInput
+    ? [resolvedInputPath]
+    : [expectedPath, siblingPath].filter(
+        (candidate): candidate is string => candidate !== undefined,
+      );
+
+  return {
+    kind: "candidates",
+    candidatePaths,
+    resolvedInputPath,
+    isPathInput,
+    input: trimmedInput,
+  };
+}

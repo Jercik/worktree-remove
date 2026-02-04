@@ -10,19 +10,24 @@
  */
 
 import path from "node:path";
-import {
-  exitWithMessage,
-  normalizeBranchName,
-  confirm,
-} from "../git/git-helpers.js";
+import { exitWithMessage, confirm } from "../git/git-helpers.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
+import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 
-export async function removeWorktree(inputBranch: string): Promise<void> {
-  const targetBranch = normalizeBranchName(inputBranch);
+function shortHash(hash: string | undefined): string | undefined {
+  if (!hash) return undefined;
+  return hash.length <= 7 ? hash : hash.slice(0, 7);
+}
+
+export async function removeWorktree(input: string): Promise<void> {
+  const trimmedInput = input.trim();
+  if (!trimmedInput) {
+    exitWithMessage("No branch or path specified.");
+  }
 
   // Get worktree information
   const { mainPath, worktrees } = getWorktreeInfo();
@@ -35,27 +40,50 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
     );
   }
 
-  // Determine the expected directory path
-  const mainRepoName = path.basename(mainPath);
-  const expectedDirectoryName = `${mainRepoName}-${targetBranch}`;
-  const parentDirectory = path.dirname(mainPath);
-  const expectedPath = path.join(parentDirectory, expectedDirectoryName);
+  const resolvedTarget = resolveWorktreeTarget({
+    input: trimmedInput,
+    cwd,
+    mainPath,
+    worktrees,
+  });
 
-  // Check if worktree is registered
-  const registeredPath = worktrees.get(targetBranch);
+  if (resolvedTarget.kind === "ambiguous") {
+    exitWithMessage(resolvedTarget.message);
+  }
 
-  // Determine the actual path to work with (registered or expected)
-  const targetPath = registeredPath || expectedPath;
+  let registeredPath: string | undefined;
+  const registeredWorktreeFinal =
+    resolvedTarget.kind === "registered" ? resolvedTarget.worktree : undefined;
+  let targetPath: string;
+
+  if (resolvedTarget.kind === "registered") {
+    registeredPath = resolvedTarget.worktree.path;
+    targetPath = resolvedTarget.worktree.path;
+  } else {
+    let existingPath: string | undefined;
+
+    for (const candidatePath of resolvedTarget.candidatePaths) {
+      if (await directoryExists(candidatePath)) {
+        existingPath = candidatePath;
+        break;
+      }
+    }
+
+    if (!existingPath) {
+      exitWithMessage(
+        resolvedTarget.isPathInput
+          ? `No worktree or directory found at '${resolvedTarget.resolvedInputPath}'.`
+          : `No worktree or directory found for '${resolvedTarget.input}'.`,
+      );
+    }
+
+    targetPath = existingPath;
+  }
+
   const targetDirectoryName = path.basename(targetPath);
 
   // Check if directory exists
   const directoryExists_ = await directoryExists(targetPath);
-
-  if (!registeredPath && !directoryExists_) {
-    exitWithMessage(
-      `No worktree or directory found for branch '${targetBranch}'.`,
-    );
-  }
 
   // Safety check: don't remove the main worktree
   if (path.resolve(targetPath) === path.resolve(mainPath)) {
@@ -79,8 +107,17 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
 
   // Get user confirmation
   const status = registeredPath ? "registered worktree" : "orphaned directory";
+  const referenceInfo = (() => {
+    if (!registeredWorktreeFinal || !registeredPath) return "";
+    if (registeredWorktreeFinal.branch)
+      return ` (branch ${registeredWorktreeFinal.branch})`;
+    const head = shortHash(registeredWorktreeFinal.head);
+    return head ? ` (detached HEAD @ ${head})` : " (detached HEAD)";
+  })();
+
+  const displayPath = path.relative(cwd, targetPath) || targetPath;
   const confirmed = await confirm(
-    `Remove ${status} '${targetDirectoryName}' (branch ${targetBranch})?`,
+    `Remove ${status} '${targetDirectoryName}' (${displayPath})${referenceInfo}?`,
   );
 
   if (!confirmed) {

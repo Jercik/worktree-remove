@@ -54,16 +54,26 @@ This allows you to easily select which worktree to remove from a list.
 
 ### Manual Mode
 
-You can also specify the branch name directly:
+You can also specify the worktree directly by:
+
+- branch name (for worktrees on a branch)
+- worktree path (works for detached HEAD worktrees)
+- directory name in the parent folder (useful when there's no branch)
 
 ```bash
-worktree-remove <branch>
+worktree-remove <target>
 ```
 
 Example:
 
 ```bash
 worktree-remove feature/login-form
+```
+
+Detached HEAD example:
+
+```bash
+worktree-remove ../my-app-test-29
 ```
 
 ## License

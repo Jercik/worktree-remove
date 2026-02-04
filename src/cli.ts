@@ -16,38 +16,41 @@ import { Command } from "commander";
 import chalk from "chalk";
 import packageJson from "../package.json" with { type: "json" };
 import { removeWorktree } from "./worktree/remove-worktree.js";
-import { selectWorktreeBranch } from "./cli/select-worktree-branch.js";
+import { selectWorktree } from "./cli/select-worktree.js";
 
 const program = new Command()
   .name(packageJson.name)
   .description("Remove a Git worktree and/or its directory")
   .version(packageJson.version)
-  .argument("[branch]", "branch name of the worktree to remove")
+  .argument(
+    "[target]",
+    "branch name, worktree path, or directory name of the worktree to remove",
+  )
   .option("-i, --interactive", "interactively select a worktree to remove")
   .action(
-    async (branch: string | undefined, options: { interactive?: boolean }) => {
+    async (target: string | undefined, options: { interactive?: boolean }) => {
       try {
-        let targetBranch = branch;
+        let targetInput = target;
 
-        if (options.interactive || !targetBranch) {
+        if (options.interactive || !targetInput) {
           // Interactive mode: show list of worktrees
-          targetBranch = await selectWorktreeBranch();
+          targetInput = await selectWorktree();
 
-          if (!targetBranch) {
+          if (!targetInput) {
             process.exit(0);
           }
         }
 
-        if (!targetBranch) {
+        if (!targetInput) {
           console.error(
             chalk.red(
-              "No branch specified. Use --interactive or provide a branch name.",
+              "No target specified. Use --interactive or provide a branch name or path.",
             ),
           );
           process.exit(1);
         }
 
-        await removeWorktree(targetBranch);
+        await removeWorktree(targetInput);
       } catch (error: unknown) {
         console.error(chalk.red("Error:"), error);
         // eslint-disable-next-line require-atomic-updates
