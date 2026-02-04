@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import * as readline from "node:readline/promises";
+import chalk from "chalk";
 
 /**
  * Run a git command synchronously and return its trimmed stdout.
@@ -77,7 +78,7 @@ export function normalizeBranchName(name: string): string {
  * Print an error message and exit the process with status 1.
  */
 export function exitWithMessage(message: string): never {
-  console.error(message);
+  console.error(chalk.red(message));
   // eslint-disable-next-line unicorn/no-process-exit
   process.exit(1);
 }

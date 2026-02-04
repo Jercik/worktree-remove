@@ -49,10 +49,7 @@ export function resolveWorktreeTarget(
   const worktreesByPath = new Map<string, WorktreeEntry>();
 
   for (const worktree of parameters.worktrees) {
-    worktreesByPath.set(
-      normalizePathKey(normalizeGitPath(worktree.path)),
-      worktree,
-    );
+    worktreesByPath.set(normalizePathKey(worktree.path), worktree);
     if (worktree.branch) {
       worktreesByBranch.set(worktree.branch, worktree);
     }
@@ -104,9 +101,16 @@ export function resolveWorktreeTarget(
     return { kind: "registered", worktree: directMatch };
   }
 
-  const basenameMatches = parameters.worktrees.filter(
-    (worktree) => path.basename(worktree.path) === trimmedInput,
-  );
+  const isWin32 = process.platform === "win32";
+  const normalizedBasenameInput = isWin32
+    ? trimmedInput.toLowerCase()
+    : trimmedInput;
+
+  const basenameMatches = parameters.worktrees.filter((worktree) => {
+    const basename = path.basename(worktree.path);
+    const normalizedBasename = isWin32 ? basename.toLowerCase() : basename;
+    return normalizedBasename === normalizedBasenameInput;
+  });
 
   if (basenameMatches.length === 1 && basenameMatches[0]) {
     return { kind: "registered", worktree: basenameMatches[0] };
