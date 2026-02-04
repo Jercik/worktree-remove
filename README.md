@@ -78,6 +78,12 @@ Detached HEAD example:
 worktree-remove ../my-app-test-29
 ```
 
+Sibling directory name example:
+
+```bash
+worktree-remove my-app-test-29
+```
+
 ## License
 
 MIT

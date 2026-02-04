@@ -76,6 +76,12 @@ export async function removeWorktree(input: string): Promise<void> {
     targetPath = existingPath;
   }
 
+  const resolvedTargetPath = path.resolve(targetPath);
+  if (path.parse(resolvedTargetPath).root === resolvedTargetPath) {
+    exitWithMessage("Refusing to remove a filesystem root directory.");
+  }
+
+  targetPath = resolvedTargetPath;
   const targetDirectoryName = path.basename(targetPath);
 
   // Check if directory exists
