@@ -15,6 +15,7 @@ import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
+import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { trashDirectory } from "../fs/trash-directory.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 
@@ -29,7 +30,7 @@ export async function removeWorktree(input: string): Promise<void> {
 
   // Ensure we're running from the main worktree
   const cwd = process.cwd();
-  if (path.resolve(cwd) !== path.resolve(mainPath)) {
+  if (normalizePathKey(cwd) !== normalizePathKey(mainPath)) {
     exitWithMessage(
       "This command must be run from the main repository worktree.",
     );
@@ -81,8 +82,24 @@ export async function removeWorktree(input: string): Promise<void> {
   const directoryExists_ = await directoryExists(targetPath);
 
   // Safety check: don't remove the main worktree
-  if (path.resolve(targetPath) === path.resolve(mainPath)) {
+  if (normalizePathKey(targetPath) === normalizePathKey(mainPath)) {
     exitWithMessage("Refusing to remove the main worktree.");
+  }
+
+  const relativeMainToTarget = path.relative(
+    path.resolve(targetPath),
+    path.resolve(mainPath),
+  );
+  const targetContainsMain =
+    relativeMainToTarget !== "" &&
+    !path.isAbsolute(relativeMainToTarget) &&
+    relativeMainToTarget !== ".." &&
+    !relativeMainToTarget.startsWith(`..${path.sep}`);
+
+  if (targetContainsMain) {
+    exitWithMessage(
+      "Refusing to remove a directory containing the main worktree.",
+    );
   }
 
   // Check for uncommitted changes if it's a registered worktree

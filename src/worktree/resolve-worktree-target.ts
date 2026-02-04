@@ -3,6 +3,7 @@ import path from "node:path";
 import { normalizeBranchName } from "../git/git-helpers.js";
 import { normalizeGitPath } from "../git/normalize-git-path.js";
 import type { WorktreeEntry } from "../git/parse-worktree-list.js";
+import { normalizePathKey } from "../fs/normalize-path-key.js";
 
 export type ResolveWorktreeTargetInput = {
   input: string;
@@ -24,6 +25,10 @@ export type ResolvedWorktreeTarget =
 
 function looksLikePathInput(input: string): boolean {
   if (input === "") return false;
+  // Treat any leading "." as path input (e.g., "./wt", "../wt", ".git").
+  // Git disallows branch names starting with ".", so this avoids ambiguity.
+  // Hidden sibling directories can still be targeted via an explicit path like
+  // "../.hidden-dir".
   if (input.startsWith(".")) return true;
   if (input.startsWith("~/") || input.startsWith("~\\")) return true;
   return path.isAbsolute(input) || path.win32.isAbsolute(input);
@@ -44,7 +49,10 @@ export function resolveWorktreeTarget(
   const worktreesByPath = new Map<string, WorktreeEntry>();
 
   for (const worktree of parameters.worktrees) {
-    worktreesByPath.set(path.resolve(worktree.path), worktree);
+    worktreesByPath.set(
+      normalizePathKey(normalizeGitPath(worktree.path)),
+      worktree,
+    );
     if (worktree.branch) {
       worktreesByBranch.set(worktree.branch, worktree);
     }
@@ -84,11 +92,13 @@ export function resolveWorktreeTarget(
   }
 
   const directMatch =
-    worktreesByPath.get(path.resolve(resolvedInputPath)) ??
+    worktreesByPath.get(normalizePathKey(resolvedInputPath)) ??
     (expectedPath
-      ? worktreesByPath.get(path.resolve(expectedPath))
+      ? worktreesByPath.get(normalizePathKey(expectedPath))
       : undefined) ??
-    (siblingPath ? worktreesByPath.get(path.resolve(siblingPath)) : undefined);
+    (siblingPath
+      ? worktreesByPath.get(normalizePathKey(siblingPath))
+      : undefined);
 
   if (directMatch) {
     return { kind: "registered", worktree: directMatch };
