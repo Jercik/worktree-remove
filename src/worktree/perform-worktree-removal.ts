@@ -34,14 +34,15 @@ export async function performWorktreeRemoval(
       parameters.output.info(`Would move '${parameters.targetPath}' to trash.`);
     } else {
       parameters.output.info("Moving directory to trash...");
-      movedToTrash = await trashDirectory(parameters.targetPath);
-      if (movedToTrash) {
+      const trashResult = await trashDirectory(parameters.targetPath);
+      if (trashResult.ok) {
+        movedToTrash = true;
         parameters.output.info("Directory moved to trash.");
       } else if (parameters.registeredPath) {
         const proceed = parameters.force
           ? true
           : await confirmAction(
-              `Could not move directory '${parameters.targetDirectoryName}' to trash. Proceed with unregistering anyway? (Git may permanently delete it)`,
+              `Could not move directory '${parameters.targetDirectoryName}' to trash: ${trashResult.reason}. Proceed with unregistering anyway? (Git may permanently delete it)`,
               {
                 allowPrompt: parameters.allowPrompt,
                 assumeYes: parameters.assumeYes,
@@ -59,12 +60,12 @@ export async function performWorktreeRemoval(
         forceUnregister = true;
         if (parameters.force || parameters.assumeYes) {
           parameters.output.warn(
-            "Could not move directory to trash. Git may permanently delete it.",
+            `Could not move directory to trash: ${trashResult.reason}. Git may permanently delete it.`,
           );
         }
       } else {
         parameters.output.warn(
-          "Could not move directory to trash. Remove manually.",
+          `Could not move directory to trash: ${trashResult.reason}. Remove manually.`,
         );
         return;
       }
