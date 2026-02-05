@@ -12,9 +12,7 @@ export type UnregisterWorktreeOptions = {
   force: boolean;
 };
 
-export type UnregisterResult =
-  | { ok: true }
-  | { ok: false; reason: string | undefined };
+export type UnregisterResult = { ok: true } | { ok: false; reason: string };
 
 export function unregisterWorktree(
   mainPath: string,
@@ -64,11 +62,13 @@ export function unregisterWorktree(
       try {
         git("-C", mainPath, "worktree", "prune");
         return { ok: true };
-      } catch {
-        return { ok: false, reason: undefined };
+      } catch (pruneError) {
+        const pruneMessage =
+          pruneError instanceof Error ? pruneError.message : String(pruneError);
+        return { ok: false, reason: pruneMessage };
       }
     }
 
-    return { ok: false, reason: undefined };
+    return { ok: false, reason: message };
   }
 }

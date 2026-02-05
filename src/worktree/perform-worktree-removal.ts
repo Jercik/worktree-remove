@@ -87,10 +87,9 @@ export async function performWorktreeRemoval(
       if (unregisterResult.ok) {
         parameters.output.info("Unregistered from Git.");
       } else {
-        const detail = unregisterResult.reason
-          ? `: ${unregisterResult.reason}`
-          : " (may be partially removed)";
-        parameters.output.warn(`Could not fully unregister from Git${detail}.`);
+        parameters.output.warn(
+          `Could not fully unregister from Git: ${unregisterResult.reason}.`,
+        );
       }
 
       if (directoryExistsBefore && !movedToTrash) {
