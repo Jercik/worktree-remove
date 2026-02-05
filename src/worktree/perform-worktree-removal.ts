@@ -64,7 +64,7 @@ export async function performWorktreeRemoval(
           );
         }
       } else {
-        parameters.output.warn(
+        parameters.output.error(
           `Could not move directory to trash: ${trashResult.reason}. Remove manually.`,
         );
         return;
@@ -87,7 +87,7 @@ export async function performWorktreeRemoval(
       if (unregisterResult.ok) {
         parameters.output.info("Unregistered from Git.");
       } else {
-        parameters.output.warn(
+        parameters.output.error(
           `Could not fully unregister from Git: ${unregisterResult.reason}.`,
         );
       }
@@ -97,7 +97,9 @@ export async function performWorktreeRemoval(
           parameters.targetPath,
         );
         if (directoryExistsAfter) {
-          parameters.output.warn("Directory still exists. Remove it manually.");
+          parameters.output.error(
+            "Directory still exists. Remove it manually.",
+          );
         } else {
           parameters.output.info("Directory was removed by Git.");
         }
