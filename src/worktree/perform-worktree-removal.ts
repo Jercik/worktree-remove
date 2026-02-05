@@ -62,6 +62,7 @@ export async function performWorktreeRemoval(
         parameters.output.warn(
           "Could not move directory to trash. Remove manually.",
         );
+        return;
       }
     }
   }
