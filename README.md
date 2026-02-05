@@ -7,7 +7,7 @@ Safely remove a Git worktree and its directory, handling uncommitted changes and
 Running `worktree-remove` from inside the main repo:
 
 1.  Ensures you are running from the main worktree.
-2.  Finds the worktree directory in the parent directory (expects `<repo>-<branch>` naming).
+2.  Resolves the target worktree/directory (branch name, worktree path, or parent-directory name; supports `<repo>-<branch>` naming).
 3.  Checks if the worktree is registered with Git.
 4.  Safely handles "orphaned" directories (directories that exist but Git no longer recognizes as worktrees).
 5.  Checks for uncommitted changes (if registered) and, when found, asks "Remove anyway?" before proceeding.
@@ -61,6 +61,7 @@ You can also specify the worktree directly by:
 - directory name in the parent folder (useful when there's no branch)
 
 Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation.
+For safety, unregistered directories inside the main worktree are refused.
 
 ```bash
 worktree-remove <target>

@@ -26,17 +26,14 @@ export function getWorktreeInfo(): WorktreeInfo {
     exitWithMessage("Unable to determine main worktree from git worktree list");
   }
 
-  const normalizedWorktrees: WorktreeEntry[] = parsed.worktrees.map(
-    (worktree) => ({
+  const mainPath = normalizeGitPath(parsed.mainPath);
+
+  const normalizedWorktrees: WorktreeEntry[] = parsed.worktrees
+    .slice(1)
+    .map((worktree) => ({
       ...worktree,
       path: normalizeGitPath(worktree.path),
-    }),
-  );
+    }));
 
-  const mainPath = normalizedWorktrees[0]?.path ?? "";
-  if (!mainPath) {
-    exitWithMessage("Unable to determine main worktree from git worktree list");
-  }
-
-  return { mainPath, worktrees: normalizedWorktrees.slice(1) };
+  return { mainPath, worktrees: normalizedWorktrees };
 }

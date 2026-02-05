@@ -16,6 +16,7 @@ describe("resolveWorktreeTarget", () => {
           isDetached: false,
         },
       ],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -42,6 +43,7 @@ describe("resolveWorktreeTarget", () => {
           isDetached: true,
         },
       ],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -68,6 +70,7 @@ describe("resolveWorktreeTarget", () => {
           isDetached: true,
         },
       ],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -94,6 +97,7 @@ describe("resolveWorktreeTarget", () => {
           isDetached: true,
         },
       ],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -126,6 +130,7 @@ describe("resolveWorktreeTarget", () => {
           isDetached: true,
         },
       ],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -135,12 +140,40 @@ describe("resolveWorktreeTarget", () => {
     });
   });
 
+  it("matches basenames case-insensitively on win32", () => {
+    const result = resolveWorktreeTarget({
+      input: "repo-test-29",
+      cwd: String.raw`C:\Users\acme\repo`,
+      mainPath: String.raw`C:\Users\acme\repo`,
+      worktrees: [
+        {
+          path: String.raw`D:\tmp\Repo-Test-29`,
+          head: "4444444444444444444444444444444444444444",
+          branch: undefined,
+          isDetached: true,
+        },
+      ],
+      platform: "win32",
+    });
+
+    expect(result).toEqual({
+      kind: "registered",
+      worktree: {
+        path: String.raw`D:\tmp\Repo-Test-29`,
+        head: "4444444444444444444444444444444444444444",
+        branch: undefined,
+        isDetached: true,
+      },
+    });
+  });
+
   it("returns candidate paths for orphaned branch input", () => {
     const result = resolveWorktreeTarget({
       input: "feature/bar",
       cwd: "/Users/acme/repo",
       mainPath: "/Users/acme/repo",
       worktrees: [],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -152,12 +185,29 @@ describe("resolveWorktreeTarget", () => {
     });
   });
 
+  it("rejects branch-like input containing '..' path segments", () => {
+    const result = resolveWorktreeTarget({
+      input: "feature/../oops",
+      cwd: "/Users/acme/repo",
+      mainPath: "/Users/acme/repo",
+      worktrees: [],
+      platform: "linux",
+    });
+
+    expect(result).toEqual({
+      kind: "ambiguous",
+      message:
+        "Input 'feature/../oops' contains '..' path segments. Pass a full path or use --interactive.",
+    });
+  });
+
   it("returns candidate paths for orphaned directory name input", () => {
     const result = resolveWorktreeTarget({
       input: "orphan",
       cwd: "/Users/acme/repo",
       mainPath: "/Users/acme/repo",
       worktrees: [],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -175,6 +225,7 @@ describe("resolveWorktreeTarget", () => {
       cwd: "/Users/acme/repo",
       mainPath: "/Users/acme/repo",
       worktrees: [],
+      platform: "linux",
     });
 
     expect(result).toEqual({
@@ -194,6 +245,7 @@ describe("resolveWorktreeTarget", () => {
       cwd: "/Users/acme/repo",
       mainPath: "/Users/acme/repo",
       worktrees: [],
+      platform: "linux",
     });
 
     expect(result).toEqual({

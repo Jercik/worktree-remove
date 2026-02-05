@@ -64,6 +64,23 @@ detached
     });
   });
 
+  it("preserves worktree path whitespace in NUL-separated output", () => {
+    const output =
+      "worktree /repo/main\u0020\0HEAD 1111111111111111111111111111111111111111\0branch refs/heads/main\0\0";
+
+    expect(parseWorktreeListPorcelain(output)).toEqual({
+      mainPath: "/repo/main\u0020",
+      worktrees: [
+        {
+          path: "/repo/main\u0020",
+          head: "1111111111111111111111111111111111111111",
+          branch: "main",
+          isDetached: false,
+        },
+      ],
+    });
+  });
+
   it("parses detached lines with trailing whitespace", () => {
     const output = `worktree /repo/wt-detached
 HEAD 3333333333333333333333333333333333333333

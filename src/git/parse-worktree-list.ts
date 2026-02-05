@@ -13,7 +13,8 @@ export type ParsedWorktreeList = {
 };
 
 export function parseWorktreeListPorcelain(output: string): ParsedWorktreeList {
-  const lines = output.split(/\0|\n/u);
+  const isNulSeparated = output.includes("\0");
+  const lines = isNulSeparated ? output.split("\0") : output.split(/\n/u);
 
   const worktrees: WorktreeEntry[] = [];
   let current: WorktreeEntry | undefined;
@@ -24,7 +25,10 @@ export function parseWorktreeListPorcelain(output: string): ParsedWorktreeList {
         worktrees.push(current);
       }
 
-      const worktreePath = line.replace(/^worktree\s+/u, "").trim();
+      const worktreePathRaw = line.slice("worktree ".length);
+      const worktreePath = isNulSeparated
+        ? worktreePathRaw
+        : worktreePathRaw.trim();
       current = {
         path: worktreePath,
         head: undefined,
@@ -37,13 +41,15 @@ export function parseWorktreeListPorcelain(output: string): ParsedWorktreeList {
     if (!current) continue;
 
     if (line.startsWith("HEAD ")) {
-      const head = line.replace(/^HEAD\s+/u, "").trim();
+      const headRaw = line.slice("HEAD ".length);
+      const head = isNulSeparated ? headRaw : headRaw.trim();
       current.head = head || undefined;
       continue;
     }
 
     if (line.startsWith("branch ")) {
-      const rawBranch = line.replace(/^branch\s+/u, "").trim();
+      const rawBranchRaw = line.slice("branch ".length);
+      const rawBranch = isNulSeparated ? rawBranchRaw : rawBranchRaw.trim();
       current.branch = rawBranch ? normalizeBranchName(rawBranch) : undefined;
       continue;
     }

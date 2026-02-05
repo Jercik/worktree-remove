@@ -2,11 +2,11 @@
 /**
  * worktree-remove.ts
  *
- * Remove a Git worktree and/or its directory for a given branch.
- * Handles both registered worktrees and orphaned directories.
+ * Remove a Git worktree and/or its directory for a given target.
+ * Handles registered worktrees, detached HEAD worktrees, and orphaned directories.
  *
  * This script:
- * 1. Finds the expected worktree directory (following naming convention: repo-branch)
+ * 1. Resolves the target (branch/path/directory name)
  * 2. Checks if it's registered as a Git worktree
  * 3. Unregisters it if needed
  * 4. Offers to delete the directory if it exists
