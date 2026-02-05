@@ -1,13 +1,24 @@
 /**
- * Unregister a worktree from Git (without deleting the directory)
+ * Unregister a worktree from Git.
+ *
+ * Uses `git worktree remove` (and falls back to `git worktree prune`) to remove
+ * the worktree registration from the main repository. Git may delete the
+ * worktree directory if it still exists.
  */
 
 import { git } from "./git-helpers.js";
 
+export type UnregisterWorktreeOptions = {
+  force: boolean;
+};
+
+export type UnregisterResult = { ok: true } | { ok: false; reason: string };
+
 export function unregisterWorktree(
   mainPath: string,
   worktreePath: string,
-): boolean {
+  options: UnregisterWorktreeOptions,
+): UnregisterResult {
   const runRemove = (force: boolean) => {
     git(
       "-C",
@@ -20,25 +31,26 @@ export function unregisterWorktree(
   };
 
   try {
-    runRemove(true);
-    return true;
+    runRemove(false);
+    return { ok: true };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const details = message.trim() || "unknown error";
+    let message = error instanceof Error ? error.message : String(error);
 
-    if (/failed to delete.*Directory not empty/u.test(message)) {
+    if (options.force) {
       try {
-        runRemove(false);
-        return true;
-      } catch (retryError) {
-        const retryMessage =
-          retryError instanceof Error ? retryError.message : String(retryError);
-        const retryDetails = retryMessage.trim() || "unknown error";
-        console.warn(
-          `  ⚠️  git worktree remove ${worktreePath} failed: ${retryDetails}`,
-        );
-        return false;
+        runRemove(true);
+        return { ok: true };
+      } catch (forceError) {
+        message =
+          forceError instanceof Error ? forceError.message : String(forceError);
       }
+    }
+
+    if (/use --force to delete it/u.test(message)) {
+      return {
+        ok: false,
+        reason: "worktree has local modifications; re-run with --force",
+      };
     }
 
     if (
@@ -49,22 +61,14 @@ export function unregisterWorktree(
       // Directory already gone or not recognized; prune admin entries
       try {
         git("-C", mainPath, "worktree", "prune");
-        return true;
+        return { ok: true };
       } catch (pruneError) {
         const pruneMessage =
           pruneError instanceof Error ? pruneError.message : String(pruneError);
-        console.warn(
-          `  ⚠️  git worktree prune failed after removal: ${
-            pruneMessage.trim() || "unknown error"
-          }`,
-        );
-        return false;
+        return { ok: false, reason: pruneMessage };
       }
     }
 
-    console.warn(
-      `  ⚠️  git worktree remove ${worktreePath} failed: ${details}`,
-    );
-    return false;
+    return { ok: false, reason: message };
   }
 }

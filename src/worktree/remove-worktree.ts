@@ -9,58 +9,58 @@
  * - Moving the directory to trash
  */
 
-import path from "node:path";
-import {
-  exitWithMessage,
-  normalizeBranchName,
-  confirm,
-} from "../git/git-helpers.js";
+import { confirmAction } from "../cli/confirm-action.js";
+import type { OutputWriter } from "../cli/output-writer.js";
+import { exitWithMessage } from "../git/git-helpers.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
-import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
-import { trashDirectory } from "../fs/trash-directory.js";
+import { normalizePathKey } from "../fs/normalize-path-key.js";
+import { assertRemovalSafe } from "./assert-removal-safe.js";
+import { getRemovalDisplayInfo } from "./get-removal-display.js";
+import { performWorktreeRemoval } from "./perform-worktree-removal.js";
+import { resolveRemovalTarget } from "./resolve-removal-target.js";
 
-export async function removeWorktree(inputBranch: string): Promise<void> {
-  const targetBranch = normalizeBranchName(inputBranch);
+export type RemoveWorktreeOptions = {
+  dryRun: boolean;
+  assumeYes: boolean;
+  force: boolean;
+  allowPrompt: boolean;
+  output: OutputWriter;
+};
+
+export async function removeWorktree(
+  input: string,
+  options: RemoveWorktreeOptions,
+): Promise<void> {
+  const trimmedInput = input.trim();
+  if (!trimmedInput) {
+    exitWithMessage("No branch or path specified.");
+  }
 
   // Get worktree information
   const { mainPath, worktrees } = getWorktreeInfo();
 
   // Ensure we're running from the main worktree
   const cwd = process.cwd();
-  if (path.resolve(cwd) !== path.resolve(mainPath)) {
+  if (normalizePathKey(cwd) !== normalizePathKey(mainPath)) {
     exitWithMessage(
       "This command must be run from the main repository worktree.",
     );
   }
 
-  // Determine the expected directory path
-  const mainRepoName = path.basename(mainPath);
-  const expectedDirectoryName = `${mainRepoName}-${targetBranch}`;
-  const parentDirectory = path.dirname(mainPath);
-  const expectedPath = path.join(parentDirectory, expectedDirectoryName);
-
-  // Check if worktree is registered
-  const registeredPath = worktrees.get(targetBranch);
-
-  // Determine the actual path to work with (registered or expected)
-  const targetPath = registeredPath || expectedPath;
-  const targetDirectoryName = path.basename(targetPath);
-
-  // Check if directory exists
+  const resolvedTarget = await resolveRemovalTarget({
+    input: trimmedInput,
+    cwd,
+    mainPath,
+    worktrees,
+    platform: process.platform,
+  });
+  const { targetPath, registeredPath, registeredWorktree, isPathInputTarget } =
+    resolvedTarget;
   const directoryExists_ = await directoryExists(targetPath);
 
-  if (!registeredPath && !directoryExists_) {
-    exitWithMessage(
-      `No worktree or directory found for branch '${targetBranch}'.`,
-    );
-  }
-
-  // Safety check: don't remove the main worktree
-  if (path.resolve(targetPath) === path.resolve(mainPath)) {
-    exitWithMessage("Refusing to remove the main worktree.");
-  }
+  assertRemovalSafe({ targetPath, mainPath, registeredPath });
 
   // Check for uncommitted changes if it's a registered worktree
   if (
@@ -68,71 +68,63 @@ export async function removeWorktree(inputBranch: string): Promise<void> {
     directoryExists_ &&
     hasUncommittedChanges(registeredPath)
   ) {
-    const proceed = await confirm(
-      "Worktree has uncommitted changes. Remove anyway?",
-    );
-    if (!proceed) {
-      console.log("Removal cancelled.");
-      return;
+    if (options.force || options.assumeYes || options.dryRun) {
+      options.output.warn("Worktree has uncommitted changes.");
+    } else {
+      const proceed = await confirmAction(
+        "Worktree has uncommitted changes. Remove anyway?",
+        {
+          allowPrompt: options.allowPrompt,
+          assumeYes: options.assumeYes,
+          dryRun: options.dryRun,
+          promptDisabledMessage:
+            "Worktree has uncommitted changes. Re-run with --yes, --force, or --dry-run to proceed in non-interactive mode.",
+        },
+      );
+      if (!proceed) {
+        options.output.warn("Removal cancelled.");
+        return;
+      }
     }
   }
 
   // Get user confirmation
-  const status = registeredPath ? "registered worktree" : "orphaned directory";
-  const confirmed = await confirm(
-    `Remove ${status} '${targetDirectoryName}' (branch ${targetBranch})?`,
+  const { status, referenceInfo, displayPath, targetDirectoryName } =
+    getRemovalDisplayInfo({
+      cwd,
+      targetPath,
+      registeredPath,
+      registeredWorktree,
+      isPathInputTarget,
+    });
+  const referenceSuffix = referenceInfo ? `, ${referenceInfo}` : "";
+  const confirmed = await confirmAction(
+    `Remove ${status} '${targetDirectoryName}' (${displayPath}${referenceSuffix})?`,
+    {
+      allowPrompt: options.allowPrompt,
+      assumeYes: options.assumeYes,
+      dryRun: options.dryRun,
+      promptDisabledMessage:
+        "Confirmation required. Re-run with --yes or --dry-run to proceed in non-interactive mode.",
+    },
   );
 
   if (!confirmed) {
-    console.log("Removal cancelled.");
+    options.output.warn("Removal cancelled.");
     return;
   }
 
-  console.log(`➤ Removing ${status} '${targetDirectoryName}'...`);
-
-  // Step 1: Unregister from Git first (let Git delete the directory if it wants)
-  if (registeredPath) {
-    console.log("  • Unregistering from Git...");
-    const unregistered = unregisterWorktree(mainPath, registeredPath);
-    if (unregistered) {
-      console.log("  ✓ Unregistered from Git");
-    } else {
-      console.log(
-        "  ⚠️  Could not fully unregister from Git (may be partially removed)",
-      );
-    }
-  }
-
-  // Step 2: If directory still exists, move it to trash
-  // Re-check existence since git worktree remove may have deleted it
-  const directoryExistsNow = await directoryExists(targetPath);
-
-  if (!directoryExistsNow && directoryExists_) {
-    // Directory was deleted by git worktree remove
-    console.log("  ✓ Directory was removed by Git");
-  } else if (directoryExistsNow) {
-    // Directory still exists, offer to trash it
-    const trashConfirmed = registeredPath
-      ? await confirm(`Move directory '${targetDirectoryName}' to trash?`)
-      : true; // Always trash orphaned directories if user confirmed above
-
-    if (trashConfirmed) {
-      console.log("  • Moving directory to trash...");
-      const movedToTrash = await trashDirectory(targetPath);
-      if (movedToTrash) {
-        console.log("  ✓ Directory moved to trash");
-      } else {
-        console.log(
-          "  ⚠️  Could not move directory to trash - remove manually",
-        );
-      }
-    } else {
-      console.log("  • Directory retained");
-    }
-  } else {
-    // Directory never existed
-    console.log("  ℹ Directory did not exist");
-  }
-
-  console.log("✔ Done!");
+  await performWorktreeRemoval({
+    status,
+    targetDirectoryName,
+    targetPath,
+    mainPath,
+    registeredPath,
+    directoryExistedInitially: directoryExists_,
+    dryRun: options.dryRun,
+    assumeYes: options.assumeYes,
+    force: options.force,
+    allowPrompt: options.allowPrompt,
+    output: options.output,
+  });
 }
