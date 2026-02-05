@@ -12,11 +12,15 @@ export type UnregisterWorktreeOptions = {
   force: boolean;
 };
 
+export type UnregisterResult =
+  | { ok: true }
+  | { ok: false; reason: string | undefined };
+
 export function unregisterWorktree(
   mainPath: string,
   worktreePath: string,
   options: UnregisterWorktreeOptions,
-): boolean {
+): UnregisterResult {
   const runRemove = (force: boolean) => {
     git(
       "-C",
@@ -30,14 +34,14 @@ export function unregisterWorktree(
 
   try {
     runRemove(false);
-    return true;
+    return { ok: true };
   } catch (error) {
     let message = error instanceof Error ? error.message : String(error);
 
     if (options.force) {
       try {
         runRemove(true);
-        return true;
+        return { ok: true };
       } catch (forceError) {
         message =
           forceError instanceof Error ? forceError.message : String(forceError);
@@ -45,7 +49,10 @@ export function unregisterWorktree(
     }
 
     if (/use --force to delete it/u.test(message)) {
-      return false;
+      return {
+        ok: false,
+        reason: "worktree has local modifications; re-run with --force",
+      };
     }
 
     if (
@@ -56,12 +63,12 @@ export function unregisterWorktree(
       // Directory already gone or not recognized; prune admin entries
       try {
         git("-C", mainPath, "worktree", "prune");
-        return true;
+        return { ok: true };
       } catch {
-        return false;
+        return { ok: false, reason: undefined };
       }
     }
 
-    return false;
+    return { ok: false, reason: undefined };
   }
 }
