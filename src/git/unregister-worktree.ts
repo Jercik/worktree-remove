@@ -32,16 +32,20 @@ export function unregisterWorktree(
     runRemove(false);
     return true;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    let message = error instanceof Error ? error.message : String(error);
 
-    if (/use --force to delete it/u.test(message)) {
-      if (!options.force) return false;
+    if (options.force) {
       try {
         runRemove(true);
         return true;
-      } catch {
-        return false;
+      } catch (forceError) {
+        message =
+          forceError instanceof Error ? forceError.message : String(forceError);
       }
+    }
+
+    if (/use --force to delete it/u.test(message)) {
+      return false;
     }
 
     if (
