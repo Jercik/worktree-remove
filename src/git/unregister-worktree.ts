@@ -1,5 +1,9 @@
 /**
- * Unregister a worktree from Git (without deleting the directory)
+ * Unregister a worktree from Git.
+ *
+ * Uses `git worktree remove` (and falls back to `git worktree prune`) to remove
+ * the worktree registration from the main repository. Git may delete the
+ * worktree directory if it still exists.
  */
 
 import { git } from "./git-helpers.js";

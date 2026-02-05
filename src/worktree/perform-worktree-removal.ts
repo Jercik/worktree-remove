@@ -19,7 +19,27 @@ export async function performWorktreeRemoval(
     `➤ Removing ${parameters.status} '${parameters.targetDirectoryName}'...`,
   );
 
-  // Step 1: Unregister from Git first (let Git delete the directory if it wants)
+  const directoryExistsBefore = await directoryExists(parameters.targetPath);
+  let movedToTrash = false;
+
+  if (directoryExistsBefore) {
+    console.log("  • Moving directory to trash...");
+    movedToTrash = await trashDirectory(parameters.targetPath);
+    if (movedToTrash) {
+      console.log("  ✓ Directory moved to trash");
+    } else if (parameters.registeredPath) {
+      const proceed = await confirm(
+        `Could not move directory '${parameters.targetDirectoryName}' to trash. Proceed with unregistering anyway? (Git may permanently delete it)`,
+      );
+      if (!proceed) {
+        console.log("Removal cancelled.");
+        return;
+      }
+    } else {
+      console.log("  ⚠️  Could not move directory to trash - remove manually");
+    }
+  }
+
   if (parameters.registeredPath) {
     console.log("  • Unregistering from Git...");
     const unregistered = unregisterWorktree(
@@ -33,38 +53,16 @@ export async function performWorktreeRemoval(
         "  ⚠️  Could not fully unregister from Git (may be partially removed)",
       );
     }
-  }
 
-  // Step 2: If directory still exists, move it to trash
-  // Re-check existence since git worktree remove may have deleted it
-  const directoryExistsNow = await directoryExists(parameters.targetPath);
-
-  if (!directoryExistsNow && parameters.directoryExistedInitially) {
-    // Directory was deleted by git worktree remove
-    console.log("  ✓ Directory was removed by Git");
-  } else if (directoryExistsNow) {
-    // Directory still exists, offer to trash it
-    const trashConfirmed = parameters.registeredPath
-      ? await confirm(
-          `Move directory '${parameters.targetDirectoryName}' to trash?`,
-        )
-      : true; // Always trash orphaned directories if user confirmed above
-
-    if (trashConfirmed) {
-      console.log("  • Moving directory to trash...");
-      const movedToTrash = await trashDirectory(parameters.targetPath);
-      if (movedToTrash) {
-        console.log("  ✓ Directory moved to trash");
+    if (directoryExistsBefore && !movedToTrash) {
+      const directoryExistsAfter = await directoryExists(parameters.targetPath);
+      if (directoryExistsAfter) {
+        console.log("  ⚠️  Directory still exists - remove manually");
       } else {
-        console.log(
-          "  ⚠️  Could not move directory to trash - remove manually",
-        );
+        console.log("  ✓ Directory was removed by Git");
       }
-    } else {
-      console.log("  • Directory retained");
     }
-  } else {
-    // Directory never existed
+  } else if (!directoryExistsBefore && !parameters.directoryExistedInitially) {
     console.log("  ℹ Directory did not exist");
   }
 

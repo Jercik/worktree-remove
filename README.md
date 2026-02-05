@@ -12,9 +12,9 @@ Running `worktree-remove` from inside the main repo:
 4.  Safely handles "orphaned" directories (directories that exist but Git no longer recognizes as worktrees).
 5.  Checks for uncommitted changes (if registered) and, when found, asks "Remove anyway?" before proceeding.
 6.  Asks for a final confirmation to remove the registered worktree or orphaned directory.
-7.  Unregisters the worktree from Git (`git worktree remove`).
-8.  Moves the directory to the system trash instead of permanently deleting it (safer than `rm -rf`).
-9.  Verifies the removal was successful.
+7.  Moves the directory to the system trash when possible (safer than `rm -rf`).
+8.  Unregisters the worktree from Git (`git worktree remove` / `git worktree prune`).
+9.  Reports the outcome.
 
 ## Requirements
 

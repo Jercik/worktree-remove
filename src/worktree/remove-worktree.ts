@@ -59,35 +59,31 @@ export async function removeWorktree(input: string): Promise<void> {
     registeredPath = resolvedTarget.worktree.path;
     targetPath = resolvedTarget.worktree.path;
   } else {
-    const existingCandidatePaths: string[] = [];
+    let existingPath: string | undefined;
+    let secondExistingPath: string | undefined;
 
     for (const candidatePath of resolvedTarget.candidatePaths) {
-      if (await directoryExists(candidatePath)) {
-        existingCandidatePaths.push(candidatePath);
+      if (!(await directoryExists(candidatePath))) continue;
+      if (!existingPath) {
+        existingPath = candidatePath;
+        continue;
       }
+
+      secondExistingPath = candidatePath;
+      break;
     }
 
-    if (existingCandidatePaths.length === 0) {
-      exitWithMessage(
-        resolvedTarget.isPathInput
-          ? `No worktree or directory found at '${resolvedTarget.resolvedInputPath}'.`
-          : `No worktree or directory found for '${resolvedTarget.input}'.`,
-      );
-    }
-
-    if (existingCandidatePaths.length > 1) {
-      const [first, second] = existingCandidatePaths;
-      exitWithMessage(
-        `Multiple directories exist for '${resolvedTarget.input}': '${first}' and '${second}'. Re-run with --interactive or pass a full path.`,
-      );
-    }
-
-    const existingPath = existingCandidatePaths[0];
     if (!existingPath) {
       exitWithMessage(
         resolvedTarget.isPathInput
           ? `No worktree or directory found at '${resolvedTarget.resolvedInputPath}'.`
           : `No worktree or directory found for '${resolvedTarget.input}'.`,
+      );
+    }
+
+    if (secondExistingPath) {
+      exitWithMessage(
+        `Multiple directories exist for '${resolvedTarget.input}': '${existingPath}' and '${secondExistingPath}'. Re-run with --interactive or pass a full path.`,
       );
     }
 
