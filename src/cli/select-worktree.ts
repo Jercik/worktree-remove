@@ -27,8 +27,11 @@ export async function selectWorktree(
     .map((worktree) => {
       const relativePath = path.relative(cwd, worktree.path);
       const head = worktree.head?.slice(0, 7);
-      const detachedLabel = head && `detached @ ${head}`;
-      const label = worktree.branch ?? `(${detachedLabel ?? "detached"})`;
+      const label =
+        worktree.branch ??
+        (worktree.isDetached
+          ? `(detached${head ? ` @ ${head}` : ""})`
+          : `(no branch)`);
 
       return {
         name: `${label} (${relativePath})`,

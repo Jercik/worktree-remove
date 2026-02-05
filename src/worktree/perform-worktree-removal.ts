@@ -27,6 +27,7 @@ export async function performWorktreeRemoval(
 
   const directoryExistsBefore = await directoryExists(parameters.targetPath);
   let movedToTrash = false;
+  let forceUnregister = parameters.force;
 
   if (directoryExistsBefore) {
     if (parameters.dryRun) {
@@ -53,6 +54,9 @@ export async function performWorktreeRemoval(
           parameters.output.warn("Removal cancelled.");
           return;
         }
+        // User confirmed git may permanently delete the directory, so force
+        // the unregister to handle dirty worktrees.
+        forceUnregister = true;
         if (parameters.force || parameters.assumeYes) {
           parameters.output.warn(
             "Could not move directory to trash. Git may permanently delete it.",
@@ -77,7 +81,7 @@ export async function performWorktreeRemoval(
       const unregistered = unregisterWorktree(
         parameters.mainPath,
         parameters.registeredPath,
-        { force: parameters.force },
+        { force: forceUnregister },
       );
       if (unregistered) {
         parameters.output.info("Unregistered from Git.");
