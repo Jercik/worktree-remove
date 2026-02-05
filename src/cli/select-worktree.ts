@@ -3,15 +3,21 @@
  */
 
 import path from "node:path";
-import inquirer from "inquirer";
+import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
+import type { OutputWriter } from "./output-writer.js";
 
-export async function selectWorktree(): Promise<string | undefined> {
+const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
+chalk.level = shouldUseColor ? 3 : 0;
+
+export async function selectWorktree(
+  output: OutputWriter,
+): Promise<string | undefined> {
   const { worktrees } = getWorktreeInfo();
 
   if (worktrees.length === 0) {
-    console.log(chalk.yellow("No worktrees found to remove."));
+    output.warn(chalk.yellow("No worktrees found to remove."));
     return undefined;
   }
 
@@ -30,18 +36,16 @@ export async function selectWorktree(): Promise<string | undefined> {
       };
     });
 
-  const { selectedWorktree } = await inquirer.prompt<{
-    selectedWorktree: string;
-  }>([
+  return select(
     {
-      type: "select",
-      name: "selectedWorktree",
       message: "Select a worktree to remove:",
       choices,
       pageSize: 15,
       loop: false,
     },
-  ]);
-
-  return selectedWorktree;
+    {
+      input: process.stdin,
+      output: process.stderr,
+    },
+  );
 }

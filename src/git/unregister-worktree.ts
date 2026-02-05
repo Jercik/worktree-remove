@@ -28,19 +28,12 @@ export function unregisterWorktree(
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    const details = message.trim() || "unknown error";
 
     if (/failed to delete.*Directory not empty/u.test(message)) {
       try {
         runRemove(false);
         return true;
-      } catch (retryError) {
-        const retryMessage =
-          retryError instanceof Error ? retryError.message : String(retryError);
-        const retryDetails = retryMessage.trim() || "unknown error";
-        console.warn(
-          `  ⚠️  git worktree remove ${worktreePath} failed: ${retryDetails}`,
-        );
+      } catch {
         return false;
       }
     }
@@ -54,21 +47,11 @@ export function unregisterWorktree(
       try {
         git("-C", mainPath, "worktree", "prune");
         return true;
-      } catch (pruneError) {
-        const pruneMessage =
-          pruneError instanceof Error ? pruneError.message : String(pruneError);
-        console.warn(
-          `  ⚠️  git worktree prune failed after removal: ${
-            pruneMessage.trim() || "unknown error"
-          }`,
-        );
+      } catch {
         return false;
       }
     }
 
-    console.warn(
-      `  ⚠️  git worktree remove ${worktreePath} failed: ${details}`,
-    );
     return false;
   }
 }

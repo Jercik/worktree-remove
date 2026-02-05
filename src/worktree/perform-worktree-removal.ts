@@ -1,4 +1,5 @@
-import { confirm } from "../git/git-helpers.js";
+import { confirmAction } from "../cli/confirm-action.js";
+import type { OutputWriter } from "../cli/output-writer.js";
 import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
@@ -10,61 +11,94 @@ export type PerformWorktreeRemovalInput = {
   mainPath: string;
   registeredPath: string | undefined;
   directoryExistedInitially: boolean;
+  dryRun: boolean;
+  assumeYes: boolean;
+  force: boolean;
+  allowPrompt: boolean;
+  output: OutputWriter;
 };
 
 export async function performWorktreeRemoval(
   parameters: PerformWorktreeRemovalInput,
 ): Promise<void> {
-  console.log(
-    `➤ Removing ${parameters.status} '${parameters.targetDirectoryName}'...`,
+  parameters.output.info(
+    `Removing ${parameters.status} '${parameters.targetDirectoryName}'...`,
   );
 
   const directoryExistsBefore = await directoryExists(parameters.targetPath);
   let movedToTrash = false;
 
   if (directoryExistsBefore) {
-    console.log("  • Moving directory to trash...");
-    movedToTrash = await trashDirectory(parameters.targetPath);
-    if (movedToTrash) {
-      console.log("  ✓ Directory moved to trash");
-    } else if (parameters.registeredPath) {
-      const proceed = await confirm(
-        `Could not move directory '${parameters.targetDirectoryName}' to trash. Proceed with unregistering anyway? (Git may permanently delete it)`,
-      );
-      if (!proceed) {
-        console.log("Removal cancelled.");
-        return;
-      }
+    if (parameters.dryRun) {
+      parameters.output.info(`Would move '${parameters.targetPath}' to trash.`);
     } else {
-      console.log("  ⚠️  Could not move directory to trash - remove manually");
+      parameters.output.info("Moving directory to trash...");
+      movedToTrash = await trashDirectory(parameters.targetPath);
+      if (movedToTrash) {
+        parameters.output.info("Directory moved to trash.");
+      } else if (parameters.registeredPath) {
+        const proceed = parameters.force
+          ? true
+          : await confirmAction(
+              `Could not move directory '${parameters.targetDirectoryName}' to trash. Proceed with unregistering anyway? (Git may permanently delete it)`,
+              {
+                allowPrompt: parameters.allowPrompt,
+                assumeYes: parameters.assumeYes,
+                dryRun: parameters.dryRun,
+                promptDisabledMessage:
+                  "Trash move failed. Re-run with --yes or --force to proceed in non-interactive mode.",
+              },
+            );
+        if (!proceed) {
+          parameters.output.warn("Removal cancelled.");
+          return;
+        }
+        if (parameters.force || parameters.assumeYes) {
+          parameters.output.warn(
+            "Could not move directory to trash. Git may permanently delete it.",
+          );
+        }
+      } else {
+        parameters.output.warn(
+          "Could not move directory to trash. Remove manually.",
+        );
+      }
     }
   }
 
   if (parameters.registeredPath) {
-    console.log("  • Unregistering from Git...");
-    const unregistered = unregisterWorktree(
-      parameters.mainPath,
-      parameters.registeredPath,
-    );
-    if (unregistered) {
-      console.log("  ✓ Unregistered from Git");
-    } else {
-      console.log(
-        "  ⚠️  Could not fully unregister from Git (may be partially removed)",
+    if (parameters.dryRun) {
+      parameters.output.info(
+        `Would unregister '${parameters.registeredPath}' from Git.`,
       );
-    }
-
-    if (directoryExistsBefore && !movedToTrash) {
-      const directoryExistsAfter = await directoryExists(parameters.targetPath);
-      if (directoryExistsAfter) {
-        console.log("  ⚠️  Directory still exists - remove manually");
+    } else {
+      parameters.output.info("Unregistering from Git...");
+      const unregistered = unregisterWorktree(
+        parameters.mainPath,
+        parameters.registeredPath,
+      );
+      if (unregistered) {
+        parameters.output.info("Unregistered from Git.");
       } else {
-        console.log("  ✓ Directory was removed by Git");
+        parameters.output.warn(
+          "Could not fully unregister from Git (may be partially removed).",
+        );
+      }
+
+      if (directoryExistsBefore && !movedToTrash) {
+        const directoryExistsAfter = await directoryExists(
+          parameters.targetPath,
+        );
+        if (directoryExistsAfter) {
+          parameters.output.warn("Directory still exists. Remove it manually.");
+        } else {
+          parameters.output.info("Directory was removed by Git.");
+        }
       }
     }
   } else if (!directoryExistsBefore && !parameters.directoryExistedInitially) {
-    console.log("  ℹ Directory did not exist");
+    parameters.output.info("Directory did not exist.");
   }
 
-  console.log("✔ Done!");
+  parameters.output.info("Done.");
 }

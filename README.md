@@ -11,15 +11,16 @@ Running `worktree-remove` from inside the main repo:
 3.  Checks if the worktree is registered with Git.
 4.  Safely handles "orphaned" directories (directories that exist but Git no longer recognizes as worktrees).
 5.  Checks for uncommitted changes (if registered) and, when found, asks "Remove anyway?" before proceeding.
-6.  Asks for a final confirmation to remove the registered worktree or orphaned directory.
+6.  Asks for a final confirmation to remove the registered worktree or orphaned directory (unless `--yes`, `--force`, or `--dry-run`).
 7.  Moves the directory to the system trash when possible (safer than `rm -rf`).
 8.  Unregisters the worktree from Git (`git worktree remove` / `git worktree prune`).
-9.  Reports the outcome.
+9.  Reports the outcome when `--verbose` or `--dry-run` is used.
 
 ## Requirements
 
 - Node.js ≥ 22.14.0
 - Git with `git worktree` support
+- Optional: set `WORKTREE_REMOVE_GIT_PATH` to override the git executable
 
 ## Install / run
 
@@ -39,14 +40,14 @@ worktree-remove
 
 Run this inside the main worktree of your project.
 
+By default, the CLI is non-interactive and quiet. Pass a target explicitly, or use `--interactive` to pick from a list. Use `--verbose` or `--dry-run` to see progress output.
+
 ### Interactive Mode (Recommended)
 
-If you don't provide a branch name, or use the `-i` flag, an interactive list of worktrees will be shown:
+Use the `-i` flag to open an interactive list of worktrees:
 
 ```bash
 # inside /my/path/my-app
-worktree-remove
-# or
 worktree-remove -i
 ```
 
@@ -83,6 +84,56 @@ Sibling directory name example:
 
 ```bash
 worktree-remove my-app-test-29
+```
+
+## Options
+
+- `-i, --interactive` interactively select a worktree to remove
+- `--no-interactive` disable all prompts and interactive selection
+- `-y, --yes` assume yes for all confirmation prompts
+- `-f, --force` skip safety prompts and proceed on failures
+- `--dry-run` show what would be removed without making changes
+- `--verbose` show detailed progress output
+- `--quiet` suppress non-error output
+
+## Examples
+
+```bash
+# remove a worktree by branch name
+worktree-remove feature/login-form
+```
+
+```bash
+# preview what would be removed
+worktree-remove --dry-run feature/login-form
+```
+
+```bash
+# use an interactive selector
+worktree-remove --interactive
+```
+
+```bash
+# pipe a worktree path from git + fzf
+git worktree list --porcelain | rg '^worktree ' | sed 's/^worktree //' | fzf | xargs worktree-remove --yes
+```
+
+## Automation Notes
+
+In CI or non-interactive shells, pass `--yes` or `--dry-run`. Use `--no-interactive` to prevent any prompts.
+
+## Agent Rule
+
+Add to your `CLAUDE.md` or `AGENTS.md`:
+
+```markdown
+# Rule: `worktree-remove` Usage
+
+Run `npx -y worktree-remove --help` to learn available options.
+
+Use `worktree-remove` when you need to safely remove Git worktrees.
+It handles uncommitted changes, orphaned directories, and moves
+files to trash instead of permanent deletion.
 ```
 
 ## License

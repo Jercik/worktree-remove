@@ -9,16 +9,30 @@
  * - Moving the directory to trash
  */
 
-import path from "node:path";
-import { exitWithMessage, confirm } from "../git/git-helpers.js";
+import { confirmAction } from "../cli/confirm-action.js";
+import type { OutputWriter } from "../cli/output-writer.js";
+import { exitWithMessage } from "../git/git-helpers.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
+import { assertRemovalSafe } from "./assert-removal-safe.js";
+import { getRemovalDisplayInfo } from "./get-removal-display.js";
 import { performWorktreeRemoval } from "./perform-worktree-removal.js";
-import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
+import { resolveRemovalTarget } from "./resolve-removal-target.js";
 
-export async function removeWorktree(input: string): Promise<void> {
+export type RemoveWorktreeOptions = {
+  dryRun: boolean;
+  assumeYes: boolean;
+  force: boolean;
+  allowPrompt: boolean;
+  output: OutputWriter;
+};
+
+export async function removeWorktree(
+  input: string,
+  options: RemoveWorktreeOptions,
+): Promise<void> {
   const trimmedInput = input.trim();
   if (!trimmedInput) {
     exitWithMessage("No branch or path specified.");
@@ -35,108 +49,18 @@ export async function removeWorktree(input: string): Promise<void> {
     );
   }
 
-  const resolvedTarget = resolveWorktreeTarget({
+  const resolvedTarget = await resolveRemovalTarget({
     input: trimmedInput,
     cwd,
     mainPath,
     worktrees,
     platform: process.platform,
   });
-
-  if (resolvedTarget.kind === "ambiguous") {
-    exitWithMessage(resolvedTarget.message);
-  }
-
-  const isPathInputTarget =
-    resolvedTarget.kind === "candidates" && resolvedTarget.isPathInput;
-
-  let registeredPath: string | undefined;
-  const registeredWorktreeFinal =
-    resolvedTarget.kind === "registered" ? resolvedTarget.worktree : undefined;
-  let targetPath: string;
-
-  if (resolvedTarget.kind === "registered") {
-    registeredPath = resolvedTarget.worktree.path;
-    targetPath = resolvedTarget.worktree.path;
-  } else {
-    let existingPath: string | undefined;
-    let secondExistingPath: string | undefined;
-
-    for (const candidatePath of resolvedTarget.candidatePaths) {
-      if (!(await directoryExists(candidatePath))) continue;
-      if (!existingPath) {
-        existingPath = candidatePath;
-        continue;
-      }
-
-      secondExistingPath = candidatePath;
-      break;
-    }
-
-    if (!existingPath) {
-      exitWithMessage(
-        resolvedTarget.isPathInput
-          ? `No worktree or directory found at '${resolvedTarget.resolvedInputPath}'.`
-          : `No worktree or directory found for '${resolvedTarget.input}'.`,
-      );
-    }
-
-    if (secondExistingPath) {
-      exitWithMessage(
-        `Multiple directories exist for '${resolvedTarget.input}': '${existingPath}' and '${secondExistingPath}'. Re-run with --interactive or pass a full path.`,
-      );
-    }
-
-    targetPath = existingPath;
-  }
-
-  const resolvedTargetPath = path.resolve(targetPath);
-  if (path.parse(resolvedTargetPath).root === resolvedTargetPath) {
-    exitWithMessage("Refusing to remove a filesystem root directory.");
-  }
-
-  targetPath = resolvedTargetPath;
-  const targetDirectoryName = path.basename(targetPath);
-
-  // Check if directory exists
+  const { targetPath, registeredPath, registeredWorktree, isPathInputTarget } =
+    resolvedTarget;
   const directoryExists_ = await directoryExists(targetPath);
 
-  // Safety check: don't remove the main worktree
-  if (normalizePathKey(targetPath) === normalizePathKey(mainPath)) {
-    exitWithMessage("Refusing to remove the main worktree.");
-  }
-
-  const relativeMainToTarget = path.relative(
-    path.resolve(targetPath),
-    path.resolve(mainPath),
-  );
-  const targetContainsMain =
-    relativeMainToTarget !== "" &&
-    !path.isAbsolute(relativeMainToTarget) &&
-    relativeMainToTarget !== ".." &&
-    !relativeMainToTarget.startsWith(`..${path.sep}`);
-
-  if (targetContainsMain) {
-    exitWithMessage(
-      "Refusing to remove a directory containing the main worktree.",
-    );
-  }
-
-  const relativeTargetToMain = path.relative(
-    path.resolve(mainPath),
-    path.resolve(targetPath),
-  );
-  const mainContainsTarget =
-    relativeTargetToMain !== "" &&
-    !path.isAbsolute(relativeTargetToMain) &&
-    relativeTargetToMain !== ".." &&
-    !relativeTargetToMain.startsWith(`..${path.sep}`);
-
-  if (!registeredPath && mainContainsTarget) {
-    exitWithMessage(
-      "Refusing to remove an unregistered directory inside the main worktree.",
-    );
-  }
+  assertRemovalSafe({ targetPath, mainPath, registeredPath });
 
   // Check for uncommitted changes if it's a registered worktree
   if (
@@ -144,38 +68,48 @@ export async function removeWorktree(input: string): Promise<void> {
     directoryExists_ &&
     hasUncommittedChanges(registeredPath)
   ) {
-    const proceed = await confirm(
-      "Worktree has uncommitted changes. Remove anyway?",
-    );
-    if (!proceed) {
-      console.log("Removal cancelled.");
-      return;
+    if (options.force || options.assumeYes || options.dryRun) {
+      options.output.warn("Worktree has uncommitted changes.");
+    } else {
+      const proceed = await confirmAction(
+        "Worktree has uncommitted changes. Remove anyway?",
+        {
+          allowPrompt: options.allowPrompt,
+          assumeYes: options.assumeYes,
+          dryRun: options.dryRun,
+          promptDisabledMessage:
+            "Worktree has uncommitted changes. Re-run with --yes, --force, or --dry-run to proceed in non-interactive mode.",
+        },
+      );
+      if (!proceed) {
+        options.output.warn("Removal cancelled.");
+        return;
+      }
     }
   }
 
   // Get user confirmation
-  const status = registeredPath
-    ? "registered worktree"
-    : isPathInputTarget
-      ? "unregistered directory"
-      : "orphaned directory";
-  const referenceInfo = (() => {
-    if (!registeredWorktreeFinal || !registeredPath) return "";
-    if (registeredWorktreeFinal.branch)
-      return ` (branch ${registeredWorktreeFinal.branch})`;
-    const head = registeredWorktreeFinal.head?.slice(0, 7);
-    return head ? ` (detached HEAD @ ${head})` : " (detached HEAD)";
-  })();
-
-  const displayPath = isPathInputTarget
-    ? targetPath
-    : path.relative(cwd, targetPath) || targetPath;
-  const confirmed = await confirm(
+  const { status, referenceInfo, displayPath, targetDirectoryName } =
+    getRemovalDisplayInfo({
+      cwd,
+      targetPath,
+      registeredPath,
+      registeredWorktree,
+      isPathInputTarget,
+    });
+  const confirmed = await confirmAction(
     `Remove ${status} '${targetDirectoryName}' (${displayPath})${referenceInfo}?`,
+    {
+      allowPrompt: options.allowPrompt,
+      assumeYes: options.assumeYes,
+      dryRun: options.dryRun,
+      promptDisabledMessage:
+        "Confirmation required. Re-run with --yes or --dry-run to proceed in non-interactive mode.",
+    },
   );
 
   if (!confirmed) {
-    console.log("Removal cancelled.");
+    options.output.warn("Removal cancelled.");
     return;
   }
 
@@ -186,5 +120,10 @@ export async function removeWorktree(input: string): Promise<void> {
     mainPath,
     registeredPath,
     directoryExistedInitially: directoryExists_,
+    dryRun: options.dryRun,
+    assumeYes: options.assumeYes,
+    force: options.force,
+    allowPrompt: options.allowPrompt,
+    output: options.output,
   });
 }

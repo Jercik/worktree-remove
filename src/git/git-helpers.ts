@@ -2,6 +2,29 @@ import { spawnSync } from "node:child_process";
 import * as readline from "node:readline/promises";
 import chalk from "chalk";
 
+const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
+chalk.level = shouldUseColor ? 3 : 0;
+
+function getGitExecutable(): string {
+  const configuredPath = process.env.WORKTREE_REMOVE_GIT_PATH?.trim();
+  return configuredPath && configuredPath.length > 0 ? configuredPath : "git";
+}
+
+export function ensureGitAvailable(): void {
+  const gitExecutable = getGitExecutable();
+  const result = spawnSync(gitExecutable, ["--version"], {
+    encoding: "utf8",
+  });
+
+  if (result.error || result.status !== 0) {
+    const hint =
+      gitExecutable === "git"
+        ? "Install Git or set WORKTREE_REMOVE_GIT_PATH to a git executable."
+        : `Check WORKTREE_REMOVE_GIT_PATH ('${gitExecutable}') or install Git.`;
+    exitWithMessage(`Git is required. ${hint}`);
+  }
+}
+
 /**
  * Run a git command synchronously and return its trimmed stdout.
  * Any failure causes the script to throw.
@@ -11,6 +34,7 @@ import chalk from "chalk";
 export function git(
   ...arguments_: [...string[], { cwd?: string }] | string[]
 ): string {
+  const gitExecutable = getGitExecutable();
   let cwd: string | undefined;
   let gitArguments: string[];
 
@@ -27,12 +51,19 @@ export function git(
     gitArguments = arguments_ as string[];
   }
 
-  const result = spawnSync("git", gitArguments, {
+  const result = spawnSync(gitExecutable, gitArguments, {
     encoding: "utf8",
     maxBuffer: 100 * 1024 * 1024, // 100 MB to accommodate large outputs
     ...(cwd && { cwd }),
   });
-  if (result.error) throw result.error;
+  if (result.error) {
+    if ((result.error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new Error(
+        `Git executable not found at '${gitExecutable}'. Set WORKTREE_REMOVE_GIT_PATH or install Git.`,
+      );
+    }
+    throw result.error;
+  }
   if (result.status !== 0) {
     throw new Error(
       result.stderr || `git ${gitArguments[0] ?? "command"} failed`,
@@ -91,7 +122,7 @@ export function exitWithMessage(message: string): never {
 export async function confirm(message: string): Promise<boolean> {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout,
+    output: process.stderr,
   });
 
   try {
