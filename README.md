@@ -29,18 +29,21 @@ You usually don’t need a global install.
 ```bash
 # inside /my/path/my-app (main worktree)
 # one-off
-npx worktree-remove
+npx worktree-remove -i
+
+# or pass a target directly
+npx worktree-remove feature/login-form
 
 # or install globally
 pnpm add -g worktree-remove   # or: npm i -g worktree-remove
-worktree-remove
+worktree-remove -i
 ```
 
 ## Usage
 
 Run this inside the main worktree of your project.
 
-By default, the CLI is non-interactive and quiet. Pass a target explicitly, or use `--interactive` to pick from a list. Use `--verbose` or `--dry-run` to see progress output.
+By default, the CLI is quiet and requires an explicit target (non-interactive selection). Pass a target explicitly, or use `--interactive` to pick from a list. In a TTY it will still prompt for confirmations unless `--no-interactive`, `--yes`, `--force`, or `--dry-run` is used.
 
 ### Interactive Mode (Recommended)
 

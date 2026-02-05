@@ -27,10 +27,11 @@ export function getRemovalDisplayInfo(
 
   const referenceInfo = (() => {
     if (!input.registeredWorktree || !input.registeredPath) return "";
-    if (input.registeredWorktree.branch)
-      return ` (branch ${input.registeredWorktree.branch})`;
+    if (input.registeredWorktree.branch) {
+      return `branch ${input.registeredWorktree.branch}`;
+    }
     const head = input.registeredWorktree.head?.slice(0, 7);
-    return head ? ` (detached HEAD @ ${head})` : " (detached HEAD)";
+    return head ? `detached HEAD @ ${head}` : "detached HEAD";
   })();
 
   const displayPath = input.isPathInputTarget

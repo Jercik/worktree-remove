@@ -97,8 +97,9 @@ export async function removeWorktree(
       registeredWorktree,
       isPathInputTarget,
     });
+  const referenceSuffix = referenceInfo ? `, ${referenceInfo}` : "";
   const confirmed = await confirmAction(
-    `Remove ${status} '${targetDirectoryName}' (${displayPath})${referenceInfo}?`,
+    `Remove ${status} '${targetDirectoryName}' (${displayPath}${referenceSuffix})?`,
     {
       allowPrompt: options.allowPrompt,
       assumeYes: options.assumeYes,
