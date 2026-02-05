@@ -12,8 +12,15 @@ export type ParsedWorktreeList = {
   worktrees: WorktreeEntry[];
 };
 
-export function parseWorktreeListPorcelain(output: string): ParsedWorktreeList {
-  const isNulSeparated = output.includes("\0");
+export type ParseWorktreeListOptions = {
+  isNulSeparated?: boolean;
+};
+
+export function parseWorktreeListPorcelain(
+  output: string,
+  options: ParseWorktreeListOptions = {},
+): ParsedWorktreeList {
+  const isNulSeparated = options.isNulSeparated ?? output.includes("\0");
   const lines = isNulSeparated ? output.split("\0") : output.split(/\n/u);
 
   const worktrees: WorktreeEntry[] = [];

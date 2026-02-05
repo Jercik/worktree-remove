@@ -77,6 +77,7 @@ export async function performWorktreeRemoval(
       const unregistered = unregisterWorktree(
         parameters.mainPath,
         parameters.registeredPath,
+        { force: parameters.force },
       );
       if (unregistered) {
         parameters.output.info("Unregistered from Git.");
@@ -98,6 +99,7 @@ export async function performWorktreeRemoval(
       }
     }
   } else if (!directoryExistsBefore && !parameters.directoryExistedInitially) {
+    // Only report when the directory never existed; it may disappear between checks.
     parameters.output.info("Directory did not exist.");
   }
 

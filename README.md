@@ -43,7 +43,7 @@ worktree-remove -i
 
 Run this inside the main worktree of your project.
 
-By default, the CLI is quiet and requires an explicit target (non-interactive selection). Pass a target explicitly, or use `--interactive` to pick from a list. In a TTY it will still prompt for confirmations unless `--no-interactive`, `--yes`, `--force`, or `--dry-run` is used.
+By default, the CLI is quiet and requires an explicit target (non-interactive selection). Pass a target explicitly, or use `--interactive` to pick from a list. In a TTY it will still prompt for confirmations unless `--no-interactive`, `--yes`, or `--dry-run` is used. Use `--force` to bypass safety prompts around failures and uncommitted changes.
 
 ### Interactive Mode (Recommended)
 
@@ -94,7 +94,7 @@ worktree-remove my-app-test-29
 - `-i, --interactive` interactively select a worktree to remove
 - `--no-interactive` disable all prompts and interactive selection
 - `-y, --yes` assume yes for all confirmation prompts
-- `-f, --force` skip safety prompts and proceed on failures
+- `-f, --force` skip safety prompts on failures and uncommitted changes (final confirmation still required unless `--yes` or `--dry-run`)
 - `--dry-run` show what would be removed without making changes
 - `--verbose` show detailed progress output
 - `--quiet` suppress non-error output

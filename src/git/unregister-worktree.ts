@@ -8,9 +8,14 @@
 
 import { git } from "./git-helpers.js";
 
+export type UnregisterWorktreeOptions = {
+  force: boolean;
+};
+
 export function unregisterWorktree(
   mainPath: string,
   worktreePath: string,
+  options: UnregisterWorktreeOptions,
 ): boolean {
   const runRemove = (force: boolean) => {
     git(
@@ -24,14 +29,15 @@ export function unregisterWorktree(
   };
 
   try {
-    runRemove(true);
+    runRemove(false);
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
-    if (/failed to delete.*Directory not empty/u.test(message)) {
+    if (/use --force to delete it/u.test(message)) {
+      if (!options.force) return false;
       try {
-        runRemove(false);
+        runRemove(true);
         return true;
       } catch {
         return false;

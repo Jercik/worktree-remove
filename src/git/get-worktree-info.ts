@@ -15,12 +15,20 @@ interface WorktreeInfo {
 export function getWorktreeInfo(): WorktreeInfo {
   const wtList = (() => {
     try {
-      return git("worktree", "list", "--porcelain", "-z");
+      return {
+        output: git("worktree", "list", "--porcelain", "-z"),
+        isNulSeparated: true,
+      };
     } catch {
-      return git("worktree", "list", "--porcelain");
+      return {
+        output: git("worktree", "list", "--porcelain"),
+        isNulSeparated: false,
+      };
     }
   })();
-  const parsed = parseWorktreeListPorcelain(wtList);
+  const parsed = parseWorktreeListPorcelain(wtList.output, {
+    isNulSeparated: wtList.isNulSeparated,
+  });
 
   if (parsed.worktrees.length === 0 || !parsed.mainPath) {
     exitWithMessage("Unable to determine main worktree from git worktree list");

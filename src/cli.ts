@@ -48,7 +48,10 @@ const program = new Command()
   .option("-i, --interactive", "interactively select a worktree to remove")
   .option("--no-interactive", "disable all prompts and interactive selection")
   .option("-y, --yes", "assume yes for all confirmation prompts")
-  .option("-f, --force", "skip safety prompts and proceed on failures")
+  .option(
+    "-f, --force",
+    "skip safety prompts on failures and uncommitted changes",
+  )
   .option("--dry-run", "show what would be removed without making changes")
   .option("--verbose", "show detailed progress output")
   .option("--quiet", "suppress non-error output")
@@ -63,7 +66,7 @@ const program = new Command()
       const quiet = options.quiet ?? false;
       const output = createOutputWriter({ dryRun, verbose, quiet });
       const force = options.force === true;
-      const assumeYes = options.yes === true || force || dryRun;
+      const assumeYes = options.yes === true || dryRun;
 
       const isCi = process.env.CI !== undefined;
       const interactiveSelection = options.interactive === true;

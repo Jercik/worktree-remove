@@ -22,6 +22,7 @@ export type ResolveRemovalTargetResult = {
 export async function resolveRemovalTarget(
   input: ResolveRemovalTargetInput,
 ): Promise<ResolveRemovalTargetResult> {
+  const pathApi = input.platform === "win32" ? path.win32 : path.posix;
   const resolvedTarget = resolveWorktreeTarget(input);
 
   if (resolvedTarget.kind === "ambiguous") {
@@ -71,8 +72,8 @@ export async function resolveRemovalTarget(
     targetPath = existingPath;
   }
 
-  const resolvedTargetPath = path.resolve(targetPath);
-  if (path.parse(resolvedTargetPath).root === resolvedTargetPath) {
+  const resolvedTargetPath = pathApi.resolve(targetPath);
+  if (pathApi.parse(resolvedTargetPath).root === resolvedTargetPath) {
     exitWithMessage("Refusing to remove a filesystem root directory.");
   }
 
