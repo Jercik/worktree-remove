@@ -32,6 +32,9 @@ function looksLikePathInput(input: string): boolean {
   // "../.hidden-dir".
   if (input.startsWith(".")) return true;
   if (input.startsWith("~/") || input.startsWith("~\\")) return true;
+  // path.isAbsolute uses the runtime platform's rules; path.win32.isAbsolute
+  // adds Windows drive-letter detection (e.g. C:\) when running on POSIX.
+  // Both recognize "/" as absolute, so this covers all platforms.
   return path.isAbsolute(input) || path.win32.isAbsolute(input);
 }
 
