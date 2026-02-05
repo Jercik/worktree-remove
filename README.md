@@ -64,7 +64,7 @@ You can also specify the worktree directly by:
 - worktree path (works for detached HEAD worktrees)
 - directory name in the parent folder (useful when there's no branch)
 
-Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation.
+Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation. Path targets can point anywhere, so use caution when providing absolute or home-relative paths.
 For safety, unregistered directories inside the main worktree are refused.
 
 ```bash
