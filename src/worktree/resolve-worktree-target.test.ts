@@ -27,6 +27,7 @@ describe("resolveWorktreeTarget", () => {
         branch: "feature/foo",
         isDetached: false,
       },
+      isPathInput: false,
     });
   });
 
@@ -54,6 +55,7 @@ describe("resolveWorktreeTarget", () => {
         branch: undefined,
         isDetached: true,
       },
+      isPathInput: false,
     });
   });
 
@@ -81,6 +83,7 @@ describe("resolveWorktreeTarget", () => {
         branch: undefined,
         isDetached: true,
       },
+      isPathInput: false,
     });
   });
 
@@ -108,6 +111,7 @@ describe("resolveWorktreeTarget", () => {
         branch: undefined,
         isDetached: true,
       },
+      isPathInput: true,
     });
   });
 
@@ -164,6 +168,7 @@ describe("resolveWorktreeTarget", () => {
         branch: undefined,
         isDetached: true,
       },
+      isPathInput: false,
     });
   });
 

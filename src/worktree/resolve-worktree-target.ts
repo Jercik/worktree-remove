@@ -14,7 +14,7 @@ export type ResolveWorktreeTargetInput = {
 };
 
 export type ResolvedWorktreeTarget =
-  | { kind: "registered"; worktree: WorktreeEntry }
+  | { kind: "registered"; worktree: WorktreeEntry; isPathInput: boolean }
   | {
       kind: "candidates";
       candidatePaths: string[];
@@ -109,7 +109,7 @@ export function resolveWorktreeTarget(
   if (normalizedBranch) {
     const byBranch = worktreesByBranch.get(normalizedBranch);
     if (byBranch) {
-      return { kind: "registered", worktree: byBranch };
+      return { kind: "registered", worktree: byBranch, isPathInput };
     }
   }
 
@@ -125,7 +125,7 @@ export function resolveWorktreeTarget(
       : undefined);
 
   if (directMatch) {
-    return { kind: "registered", worktree: directMatch };
+    return { kind: "registered", worktree: directMatch, isPathInput };
   }
 
   const isWin32 = parameters.platform === "win32";
@@ -140,7 +140,7 @@ export function resolveWorktreeTarget(
   });
 
   if (basenameMatches.length === 1 && basenameMatches[0]) {
-    return { kind: "registered", worktree: basenameMatches[0] };
+    return { kind: "registered", worktree: basenameMatches[0], isPathInput };
   }
 
   if (basenameMatches.length > 1) {

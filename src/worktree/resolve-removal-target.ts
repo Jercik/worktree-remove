@@ -29,8 +29,7 @@ export async function resolveRemovalTarget(
     exitWithMessage(resolvedTarget.message);
   }
 
-  const isPathInputTarget =
-    resolvedTarget.kind === "candidates" && resolvedTarget.isPathInput;
+  const isPathInputTarget = resolvedTarget.isPathInput;
 
   let registeredPath: string | undefined;
   const registeredWorktree =
