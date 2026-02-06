@@ -8,18 +8,11 @@ export function normalizeGitPath(
 
   const trimmed = gitPath.trim();
 
-  const cygwinMatch = /^\/cygdrive\/([a-zA-Z])(?:\/(.*))?$/u.exec(trimmed);
-  if (cygwinMatch) {
-    const driveLetter = cygwinMatch[1] as string;
-    const rest = cygwinMatch[2] ?? "";
-    const restNative = rest.replaceAll(path.posix.sep, path.win32.sep);
-    return `${driveLetter.toUpperCase()}:\\${restNative}`;
-  }
-
-  const msysMatch = /^\/([a-zA-Z])(?:\/(.*))?$/u.exec(trimmed);
-  if (msysMatch) {
-    const driveLetter = msysMatch[1] as string;
-    const rest = msysMatch[2] ?? "";
+  // Match Cygwin (/cygdrive/c/...) and MSYS (/c/...) drive paths
+  const match = /^(?:\/cygdrive)?\/([a-zA-Z])(?:\/(.*))?$/u.exec(trimmed);
+  if (match) {
+    const driveLetter = match[1] as string;
+    const rest = match[2] ?? "";
     const restNative = rest.replaceAll(path.posix.sep, path.win32.sep);
     return `${driveLetter.toUpperCase()}:\\${restNative}`;
   }
