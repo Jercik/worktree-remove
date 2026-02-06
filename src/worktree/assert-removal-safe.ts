@@ -8,38 +8,33 @@ export type RemovalSafetyInput = {
   registeredPath: string | undefined;
 };
 
+/**
+ * Returns true when `target` is strictly inside `base` (not equal, not
+ * outside, not on a different drive).  Uses {@link path.relative} for
+ * cross-platform correctness — see the Cross-Platform Path Validation rule.
+ */
+function isWithinDirectory(base: string, target: string): boolean {
+  const relative = path.relative(path.resolve(base), path.resolve(target));
+  if (relative === "") return false;
+  if (path.isAbsolute(relative)) return false;
+  return relative !== ".." && !relative.startsWith(`..${path.sep}`);
+}
+
 export function assertRemovalSafe(input: RemovalSafetyInput): void {
   if (normalizePathKey(input.targetPath) === normalizePathKey(input.mainPath)) {
     exitWithMessage("Refusing to remove the main worktree.");
   }
 
-  const relativeMainToTarget = path.relative(
-    path.resolve(input.targetPath),
-    path.resolve(input.mainPath),
-  );
-  const targetContainsMain =
-    relativeMainToTarget !== "" &&
-    !path.isAbsolute(relativeMainToTarget) &&
-    relativeMainToTarget !== ".." &&
-    !relativeMainToTarget.startsWith(`..${path.sep}`);
-
-  if (targetContainsMain) {
+  if (isWithinDirectory(input.targetPath, input.mainPath)) {
     exitWithMessage(
       "Refusing to remove a directory containing the main worktree.",
     );
   }
 
-  const relativeTargetToMain = path.relative(
-    path.resolve(input.mainPath),
-    path.resolve(input.targetPath),
-  );
-  const mainContainsTarget =
-    relativeTargetToMain !== "" &&
-    !path.isAbsolute(relativeTargetToMain) &&
-    relativeTargetToMain !== ".." &&
-    !relativeTargetToMain.startsWith(`..${path.sep}`);
-
-  if (!input.registeredPath && mainContainsTarget) {
+  if (
+    !input.registeredPath &&
+    isWithinDirectory(input.mainPath, input.targetPath)
+  ) {
     exitWithMessage(
       "Refusing to remove an unregistered directory inside the main worktree.",
     );

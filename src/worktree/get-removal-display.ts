@@ -19,11 +19,14 @@ export type RemovalDisplayInfo = {
 export function getRemovalDisplayInfo(
   input: RemovalDisplayInput,
 ): RemovalDisplayInfo {
-  const status = input.registeredPath
-    ? "registered worktree"
-    : input.isPathInputTarget
-      ? "unregistered directory"
-      : "orphaned directory";
+  let status: string;
+  if (input.registeredPath) {
+    status = "registered worktree";
+  } else if (input.isPathInputTarget) {
+    status = "unregistered directory";
+  } else {
+    status = "orphaned directory";
+  }
 
   const referenceInfo = (() => {
     if (!input.registeredWorktree || !input.registeredPath) return "";
