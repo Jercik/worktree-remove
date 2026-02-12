@@ -123,9 +123,14 @@ export async function removeWorktree(
   }
 
   if (mustSwitchToMainBeforeRemoval) {
+    const shellSafeMainPath = `'${mainPath.replaceAll("'", `'"'"'`)}'`;
+
     if (options.dryRun) {
       options.output.info(
         `Would switch process working directory to '${mainPath}' before removal.`,
+      );
+      options.output.warn(
+        `Dry run only. In a real run, you may need to run cd ${shellSafeMainPath} in your shell.`,
       );
     } else {
       try {
@@ -139,11 +144,10 @@ export async function removeWorktree(
       options.output.info(
         `Switched process working directory to '${mainPath}' before removal.`,
       );
+      options.output.warn(
+        `After removal, run cd ${shellSafeMainPath} in your shell if needed.`,
+      );
     }
-
-    options.output.warn(
-      `After removal, run 'cd ${mainPath}' in your shell if needed.`,
-    );
   }
 
   await performWorktreeRemoval({
