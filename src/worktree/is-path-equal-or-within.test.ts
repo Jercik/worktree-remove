@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { isPathEqualOrWithin } from "./is-path-equal-or-within.js";
+import {
+  isPathEqualOrWithin,
+  isPathStrictlyWithin,
+} from "./is-path-equal-or-within.js";
 
 describe("isPathEqualOrWithin", () => {
   it("returns true for the same POSIX path", () => {
@@ -60,5 +63,37 @@ describe("isPathEqualOrWithin", () => {
         platform: "win32",
       }),
     ).toBe(false);
+  });
+
+  it("returns false when one of the paths is relative", () => {
+    expect(
+      isPathEqualOrWithin({
+        basePath: "repo-feature",
+        candidatePath: "/Users/acme/repo-feature/src",
+        platform: "linux",
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("isPathStrictlyWithin", () => {
+  it("returns false for equal paths", () => {
+    expect(
+      isPathStrictlyWithin({
+        basePath: "/Users/acme/repo-feature",
+        candidatePath: "/Users/acme/repo-feature",
+        platform: "linux",
+      }),
+    ).toBe(false);
+  });
+
+  it("returns true when the candidate path is inside the base path", () => {
+    expect(
+      isPathStrictlyWithin({
+        basePath: "/Users/acme/repo-feature",
+        candidatePath: "/Users/acme/repo-feature/src",
+        platform: "linux",
+      }),
+    ).toBe(true);
   });
 });

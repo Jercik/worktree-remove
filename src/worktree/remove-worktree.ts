@@ -100,8 +100,9 @@ export async function removeWorktree(
     normalizePathKey(invocationCwd) !== normalizePathKey(mainPath);
 
   if (mustSwitchToMainBeforeRemoval) {
+    const switchVerb = options.dryRun ? "would" : "will";
     options.output.warn(
-      `Current directory is inside '${targetDirectoryName}'. The command will switch to '${mainPath}' before removing it, and your shell directory will not change.`,
+      `Current directory is inside '${targetDirectoryName}'. The command ${switchVerb} switch to '${mainPath}' before removing it, and your shell directory will not change.`,
     );
   }
 
@@ -123,14 +124,12 @@ export async function removeWorktree(
   }
 
   if (mustSwitchToMainBeforeRemoval) {
-    const shellSafeMainPath = `'${mainPath.replaceAll("'", `'"'"'`)}'`;
-
     if (options.dryRun) {
       options.output.info(
         `Would switch process working directory to '${mainPath}' before removal.`,
       );
       options.output.warn(
-        `Dry run only. In a real run, you may need to run cd ${shellSafeMainPath} in your shell.`,
+        `Dry run only. In a real run, your shell may still point to the removed directory. Switch it to '${mainPath}' or another existing path.`,
       );
     } else {
       try {
@@ -145,7 +144,7 @@ export async function removeWorktree(
         `Switched process working directory to '${mainPath}' before removal.`,
       );
       options.output.warn(
-        `After removal, run cd ${shellSafeMainPath} in your shell if needed.`,
+        `After removal, your shell may still point to a removed directory. Switch it to '${mainPath}' or another existing path.`,
       );
     }
   }
