@@ -4,14 +4,14 @@ Safely remove a Git worktree and its directory, handling uncommitted changes and
 
 ## What it does
 
-Running `worktree-remove` from inside the main repo:
+Running `worktree-remove`:
 
-1.  Ensures you are running from the main worktree.
-2.  Resolves the target worktree/directory (branch name, worktree path, or parent-directory name; supports `<repo>-<branch>` naming).
-3.  Checks if the worktree is registered with Git.
-4.  Safely handles "orphaned" directories (directories that exist but Git no longer recognizes as worktrees).
-5.  Checks for uncommitted changes (if registered) and, when found, asks "Remove anyway?" before proceeding.
-6.  Asks for a final confirmation to remove the registered worktree or orphaned directory (unless `--yes` or `--dry-run`).
+1.  Resolves the target worktree/directory (branch name, worktree path, or parent-directory name; supports `<repo>-<branch>` naming).
+2.  Checks if the worktree is registered with Git.
+3.  Safely handles "orphaned" directories (directories that exist but Git no longer recognizes as worktrees).
+4.  Checks for uncommitted changes (if registered) and, when found, asks "Remove anyway?" before proceeding.
+5.  Asks for a final confirmation to remove the registered worktree or orphaned directory (unless `--yes` or `--dry-run`).
+6.  If you are inside the target directory, warns and switches the process to the main worktree before removal (your shell directory does not change, so after removal it may still point to a directory that no longer exists).
 7.  Moves the directory to the system trash when possible (safer than `rm -rf`).
 8.  Unregisters the worktree from Git (`git worktree remove` / `git worktree prune`).
 9.  Reports the outcome when `--verbose` or `--dry-run` is used.
@@ -27,7 +27,7 @@ Running `worktree-remove` from inside the main repo:
 You usually don’t need a global install.
 
 ```bash
-# inside /my/path/my-app (main worktree)
+# inside any worktree of /my/path/my-app
 # one-off
 npx worktree-remove -i
 
@@ -41,7 +41,7 @@ worktree-remove -i
 
 ## Usage
 
-Run this inside the main worktree of your project.
+Run this from any worktree of your project. You can remove a sibling worktree, or even the worktree you are currently in.
 
 By default, the CLI is quiet and requires an explicit target (non-interactive selection). Pass a target explicitly, or use `--interactive` to pick from a list. In a TTY it will still prompt for confirmations unless `--no-interactive`, `--yes`, or `--dry-run` is used. Use `--force` to bypass safety prompts around failures and uncommitted changes.
 
@@ -50,7 +50,7 @@ By default, the CLI is quiet and requires an explicit target (non-interactive se
 Use the `-i` flag to open an interactive list of worktrees:
 
 ```bash
-# inside /my/path/my-app
+# inside any worktree for the repository
 worktree-remove -i
 ```
 

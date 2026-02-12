@@ -2,7 +2,6 @@
  * Main worktree removal use case (domain layer).
  *
  * Orchestrates:
- * - Validating execution from the main worktree
  * - Resolving the target worktree path
  * - Guard rails around uncommitted changes
  * - Unregistering the worktree
@@ -18,6 +17,7 @@ import { directoryExists } from "../fs/check-directory-exists.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { assertRemovalSafe } from "./assert-removal-safe.js";
 import { getRemovalDisplayInfo } from "./get-removal-display.js";
+import { isPathEqualOrWithin } from "./is-path-equal-or-within.js";
 import { performWorktreeRemoval } from "./perform-worktree-removal.js";
 import { resolveRemovalTarget } from "./resolve-removal-target.js";
 
@@ -40,18 +40,11 @@ export async function removeWorktree(
 
   // Get worktree information
   const { mainPath, worktrees } = getWorktreeInfo();
-
-  // Ensure we're running from the main worktree
-  const cwd = process.cwd();
-  if (normalizePathKey(cwd) !== normalizePathKey(mainPath)) {
-    exitWithMessage(
-      "This command must be run from the main repository worktree.",
-    );
-  }
+  const invocationCwd = process.cwd();
 
   const resolvedTarget = await resolveRemovalTarget({
     input: trimmedInput,
-    cwd,
+    cwd: invocationCwd,
     mainPath,
     worktrees,
     platform: process.platform,
@@ -91,12 +84,28 @@ export async function removeWorktree(
   // Get user confirmation
   const { status, referenceInfo, displayPath, targetDirectoryName } =
     getRemovalDisplayInfo({
-      cwd,
+      cwd: invocationCwd,
       targetPath,
       registeredPath,
       registeredWorktree,
       isPathInputTarget,
     });
+  const runningInsideTarget = isPathEqualOrWithin({
+    basePath: targetPath,
+    candidatePath: invocationCwd,
+    platform: process.platform,
+  });
+  const mustSwitchToMainBeforeRemoval =
+    runningInsideTarget &&
+    normalizePathKey(invocationCwd) !== normalizePathKey(mainPath);
+
+  if (mustSwitchToMainBeforeRemoval) {
+    const switchVerb = options.dryRun ? "would" : "will";
+    options.output.warn(
+      `Current directory is inside '${targetDirectoryName}'. The command ${switchVerb} switch to '${mainPath}' before removing it, and your shell directory will not change.`,
+    );
+  }
+
   const referenceSuffix = referenceInfo ? `, ${referenceInfo}` : "";
   const confirmed = await confirmAction(
     `Remove ${status} '${targetDirectoryName}' (${displayPath}${referenceSuffix})?`,
@@ -112,6 +121,32 @@ export async function removeWorktree(
   if (!confirmed) {
     options.output.warn("Removal cancelled.");
     return;
+  }
+
+  if (mustSwitchToMainBeforeRemoval) {
+    if (options.dryRun) {
+      options.output.info(
+        `Would switch process working directory to '${mainPath}' before removal.`,
+      );
+      options.output.warn(
+        `Dry run only. In a real run, your shell may still point to the removed directory. Switch it to '${mainPath}' or another existing path.`,
+      );
+    } else {
+      try {
+        process.chdir(mainPath);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        exitWithMessage(
+          `Could not switch working directory to main worktree '${mainPath}': ${reason}`,
+        );
+      }
+      options.output.info(
+        `Switched process working directory to '${mainPath}' before removal.`,
+      );
+      options.output.warn(
+        `After removal, your shell may still point to a removed directory. Switch it to '${mainPath}' or another existing path.`,
+      );
+    }
   }
 
   await performWorktreeRemoval({

@@ -133,6 +133,7 @@ Examples:
 Notes:
   Requires git. Override the path with WORKTREE_REMOVE_GIT_PATH.
   Output is quiet by default; use --verbose or --dry-run for details.
+  If your current directory is inside the target directory, the process switches to the main worktree before deletion.
   In CI or non-interactive shells, pass --yes or --dry-run.`,
 );
 
