@@ -31,11 +31,23 @@ export async function selectWorktree(
     return undefined;
   }
 
-  const isCurrentMain = isPathEqualOrWithin({
-    basePath: mainPath,
-    candidatePath: cwd,
-    platform: process.platform,
-  });
+  const currentLinkedWorktreePath = sortedWorktrees
+    .filter((worktree) =>
+      isPathEqualOrWithin({
+        basePath: worktree.path,
+        candidatePath: cwd,
+        platform: process.platform,
+      }),
+    )
+    .toSorted((a, b) => b.path.length - a.path.length)[0]?.path;
+
+  const isCurrentMain =
+    currentLinkedWorktreePath === undefined &&
+    isPathEqualOrWithin({
+      basePath: mainPath,
+      candidatePath: cwd,
+      platform: process.platform,
+    });
 
   const choices = [
     {
@@ -46,7 +58,7 @@ export async function selectWorktree(
       disabled: "Main worktree cannot be removed.",
     },
     ...sortedWorktrees.map((worktree) => {
-      const relativePath = path.relative(cwd, worktree.path);
+      const relativePath = path.relative(cwd, worktree.path) || ".";
       const head = worktree.head?.slice(0, 7);
       const label =
         worktree.branch ??
@@ -54,11 +66,7 @@ export async function selectWorktree(
           ? `(detached${head ? ` @ ${head}` : ""})`
           : `(no branch)`);
 
-      const isCurrentWorktree = isPathEqualOrWithin({
-        basePath: worktree.path,
-        candidatePath: cwd,
-        platform: process.platform,
-      });
+      const isCurrentWorktree = currentLinkedWorktreePath === worktree.path;
 
       return {
         name: `${label} (${relativePath})${
