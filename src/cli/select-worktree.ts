@@ -7,6 +7,7 @@ import { select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import type { OutputWriter } from "./output-writer.js";
+import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 
 const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
 chalk.level = shouldUseColor ? 3 : 0;
@@ -14,17 +15,37 @@ chalk.level = shouldUseColor ? 3 : 0;
 export async function selectWorktree(
   output: OutputWriter,
 ): Promise<string | undefined> {
-  const { worktrees } = getWorktreeInfo();
+  const { mainPath, worktrees } = getWorktreeInfo();
+  const cwd = process.cwd();
 
-  if (worktrees.length === 0) {
-    output.warn(chalk.yellow("No worktrees found to remove."));
+  const sortedWorktrees = worktrees.toSorted((a, b) =>
+    (a.branch ?? a.path).localeCompare(b.branch ?? b.path),
+  );
+
+  if (sortedWorktrees.length === 0) {
+    output.warn(
+      chalk.yellow(
+        "No removable worktrees found. The main worktree is not selectable.",
+      ),
+    );
     return undefined;
   }
 
-  const cwd = process.cwd();
-  const choices = worktrees
-    .toSorted((a, b) => (a.branch ?? a.path).localeCompare(b.branch ?? b.path))
-    .map((worktree) => {
+  const isCurrentMain = isPathEqualOrWithin({
+    basePath: mainPath,
+    candidatePath: cwd,
+    platform: process.platform,
+  });
+
+  const choices = [
+    {
+      name: `main worktree (${
+        path.relative(cwd, mainPath) || "main"
+      }, cannot remove)${isCurrentMain ? " [current]" : ""}`,
+      value: mainPath,
+      disabled: "Main worktree cannot be removed.",
+    },
+    ...sortedWorktrees.map((worktree) => {
       const relativePath = path.relative(cwd, worktree.path);
       const head = worktree.head?.slice(0, 7);
       const label =
@@ -33,11 +54,20 @@ export async function selectWorktree(
           ? `(detached${head ? ` @ ${head}` : ""})`
           : `(no branch)`);
 
+      const isCurrentWorktree = isPathEqualOrWithin({
+        basePath: worktree.path,
+        candidatePath: cwd,
+        platform: process.platform,
+      });
+
       return {
-        name: `${label} (${relativePath})`,
+        name: `${label} (${relativePath})${
+          isCurrentWorktree ? " [current]" : ""
+        }`,
         value: worktree.path,
       };
-    });
+    }),
+  ];
 
   return select(
     {
