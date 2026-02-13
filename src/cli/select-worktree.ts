@@ -23,6 +23,7 @@ export async function selectWorktree(
   );
 
   if (sortedWorktrees.length === 0) {
+    // @inquirer/select requires at least one selectable choice.
     output.warn(
       chalk.yellow(
         "No removable worktrees found. The main worktree is not selectable.",
