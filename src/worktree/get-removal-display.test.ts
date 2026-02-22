@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { getRemovalDisplayInfo } from "./get-removal-display.js";
-import type { WorktreeEntry } from "../git/parse-worktree-list.js";
+
+type WorktreeEntry = {
+  path: string;
+  head: string | undefined;
+  branch: string | undefined;
+  isDetached: boolean;
+};
 
 const worktreeWithBranch: WorktreeEntry = {
   path: "/Users/acme/repo-feature",

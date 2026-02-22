@@ -4,7 +4,7 @@
 
 import trash from "trash";
 
-export type TrashResult = { ok: true } | { ok: false; reason: string };
+type TrashResult = { ok: true } | { ok: false; reason: string };
 
 export async function trashDirectory(
   directoryPath: string,

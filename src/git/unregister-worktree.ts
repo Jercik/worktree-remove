@@ -8,11 +8,11 @@
 
 import { git } from "./git-helpers.js";
 
-export type UnregisterWorktreeOptions = {
+type UnregisterWorktreeOptions = {
   force: boolean;
 };
 
-export type UnregisterResult = { ok: true } | { ok: false; reason: string };
+type UnregisterResult = { ok: true } | { ok: false; reason: string };
 
 export function unregisterWorktree(
   mainPath: string,

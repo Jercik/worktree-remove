@@ -2,9 +2,15 @@ import path from "node:path";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
-import type { WorktreeEntry } from "../git/parse-worktree-list.js";
 
-export type ResolveRemovalTargetInput = {
+type WorktreeEntry = {
+  path: string;
+  head: string | undefined;
+  branch: string | undefined;
+  isDetached: boolean;
+};
+
+type ResolveRemovalTargetInput = {
   input: string;
   cwd: string;
   mainPath: string;
@@ -12,7 +18,7 @@ export type ResolveRemovalTargetInput = {
   platform: NodeJS.Platform;
 };
 
-export type ResolveRemovalTargetResult = {
+type ResolveRemovalTargetResult = {
   targetPath: string;
   registeredPath: string | undefined;
   registeredWorktree: WorktreeEntry | undefined;

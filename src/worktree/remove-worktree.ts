@@ -21,7 +21,7 @@ import { isPathEqualOrWithin } from "./is-path-equal-or-within.js";
 import { performWorktreeRemoval } from "./perform-worktree-removal.js";
 import { resolveRemovalTarget } from "./resolve-removal-target.js";
 
-export type RemoveWorktreeOptions = {
+type RemoveWorktreeOptions = {
   dryRun: boolean;
   assumeYes: boolean;
   force: boolean;

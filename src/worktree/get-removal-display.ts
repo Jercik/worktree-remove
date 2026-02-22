@@ -1,7 +1,13 @@
 import path from "node:path";
-import type { WorktreeEntry } from "../git/parse-worktree-list.js";
 
-export type RemovalDisplayInput = {
+type WorktreeEntry = {
+  path: string;
+  head: string | undefined;
+  branch: string | undefined;
+  isDetached: boolean;
+};
+
+type RemovalDisplayInput = {
   cwd: string;
   targetPath: string;
   registeredPath: string | undefined;
@@ -9,7 +15,7 @@ export type RemovalDisplayInput = {
   isPathInputTarget: boolean;
 };
 
-export type RemovalDisplayInfo = {
+type RemovalDisplayInfo = {
   status: string;
   referenceInfo: string;
   displayPath: string;

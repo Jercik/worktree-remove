@@ -2,7 +2,7 @@ import { exitWithMessage } from "../git/git-helpers.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { isPathStrictlyWithin } from "./is-path-equal-or-within.js";
 
-export type RemovalSafetyInput = {
+type RemovalSafetyInput = {
   targetPath: string;
   mainPath: string;
   registeredPath: string | undefined;

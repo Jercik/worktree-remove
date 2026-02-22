@@ -1,18 +1,18 @@
 import { normalizeBranchName } from "./git-helpers.js";
 
-export type WorktreeEntry = {
+type WorktreeEntry = {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
 };
 
-export type ParsedWorktreeList = {
+type ParsedWorktreeList = {
   mainPath: string;
   worktrees: WorktreeEntry[];
 };
 
-export type ParseWorktreeListOptions = {
+type ParseWorktreeListOptions = {
   isNulSeparated?: boolean;
 };
 

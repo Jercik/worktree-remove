@@ -2,10 +2,16 @@ import os from "node:os";
 import path from "node:path";
 import { normalizeBranchName } from "../git/git-helpers.js";
 import { normalizeGitPath } from "../git/normalize-git-path.js";
-import type { WorktreeEntry } from "../git/parse-worktree-list.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 
-export type ResolveWorktreeTargetInput = {
+type WorktreeEntry = {
+  path: string;
+  head: string | undefined;
+  branch: string | undefined;
+  isDetached: boolean;
+};
+
+type ResolveWorktreeTargetInput = {
   input: string;
   cwd: string;
   mainPath: string;
@@ -13,7 +19,7 @@ export type ResolveWorktreeTargetInput = {
   platform: NodeJS.Platform;
 };
 
-export type ResolvedWorktreeTarget =
+type ResolvedWorktreeTarget =
   | { kind: "registered"; worktree: WorktreeEntry; isPathInput: boolean }
   | {
       kind: "candidates";

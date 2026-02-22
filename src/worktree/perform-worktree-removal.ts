@@ -4,7 +4,7 @@ import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
 
-export type PerformWorktreeRemovalInput = {
+type PerformWorktreeRemovalInput = {
   status: string;
   targetDirectoryName: string;
   targetPath: string;

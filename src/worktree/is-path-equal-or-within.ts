@@ -1,6 +1,6 @@
 import path from "node:path";
 
-export type PathContainmentInput = {
+type PathContainmentInput = {
   basePath: string;
   candidatePath: string;
   platform: NodeJS.Platform;

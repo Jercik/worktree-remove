@@ -1,6 +1,6 @@
 import { confirm, exitWithMessage } from "../git/git-helpers.js";
 
-export type ConfirmActionOptions = {
+type ConfirmActionOptions = {
   assumeYes: boolean;
   allowPrompt: boolean;
   dryRun: boolean;

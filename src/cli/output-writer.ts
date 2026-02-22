@@ -1,4 +1,4 @@
-export type OutputWriterOptions = {
+type OutputWriterOptions = {
   verbose: boolean;
   quiet: boolean;
   dryRun: boolean;
