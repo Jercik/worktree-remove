@@ -135,8 +135,8 @@ export async function removeBatch(
   const limit = pLimit(4);
   const results = await Promise.allSettled(
     resolved.map((r) =>
-      limit(async () => {
-        await performWorktreeRemoval({
+      limit(() =>
+        performWorktreeRemoval({
           status: r.displayInfo.status,
           targetDirectoryName: r.displayInfo.targetDirectoryName,
           targetPath: r.targetPath,
@@ -148,9 +148,8 @@ export async function removeBatch(
           force,
           allowPrompt,
           output,
-        });
-        return r.displayInfo.targetDirectoryName;
-      }),
+        }),
+      ),
     ),
   );
 
@@ -161,13 +160,15 @@ export async function removeBatch(
     const resolvedEntry = resolved[index];
     if (!resolvedEntry) continue;
     const name = resolvedEntry.displayInfo.targetDirectoryName;
-    if (result.status === "fulfilled") {
+    if (result.status === "fulfilled" && result.value.ok) {
       succeeded.push(name);
     } else {
       failed.push(name);
-      output.error(
-        `Failed to remove '${name}': ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
-      );
+      if (result.status === "rejected") {
+        output.error(
+          `Failed to remove '${name}': ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
+        );
+      }
     }
   }
 

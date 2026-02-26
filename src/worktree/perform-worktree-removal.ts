@@ -18,9 +18,11 @@ type PerformWorktreeRemovalInput = {
   output: OutputWriter;
 };
 
+type PerformWorktreeRemovalResult = { ok: boolean };
+
 export async function performWorktreeRemoval(
   parameters: PerformWorktreeRemovalInput,
-): Promise<void> {
+): Promise<PerformWorktreeRemovalResult> {
   const {
     status,
     targetDirectoryName,
@@ -65,7 +67,7 @@ export async function performWorktreeRemoval(
             );
         if (!proceed) {
           output.warn("Removal cancelled.");
-          return;
+          return { ok: false };
         }
         // User confirmed git may permanently delete the directory, so force
         // the unregister to handle dirty worktrees.
@@ -79,7 +81,7 @@ export async function performWorktreeRemoval(
         output.error(
           `Could not move directory to trash: ${trashResult.reason}. Remove manually.`,
         );
-        return;
+        return { ok: false };
       }
     }
   }
@@ -115,4 +117,5 @@ export async function performWorktreeRemoval(
   }
 
   output.info("Done.");
+  return { ok: true };
 }
