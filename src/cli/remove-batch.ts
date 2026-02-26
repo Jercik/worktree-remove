@@ -40,7 +40,9 @@ export async function removeBatch(
     worktrees,
   });
 
-  if (resolved.length === 0) return;
+  if (resolved.length === 0) {
+    exitWithMessage("No valid targets to remove.");
+  }
 
   // Phase 1b: Batch dirty-check prompt
   const dirtyTargets = resolved.filter((r) => r.hasDirtyChanges);
@@ -109,9 +111,6 @@ export async function removeBatch(
   performCwdSwitch?.();
 
   // Phase 3: Remove targets in parallel (concurrency 4)
-  // Force-skip internal prompts for multi-target batches: the user already
-  // confirmed in Phase 2, and concurrent readline prompts would race on stdin.
-  const forceInternalPrompts = isSingleTarget ? force : true;
   const limit = pLimit(4);
   const results = await Promise.allSettled(
     resolved.map((r) =>
@@ -125,9 +124,15 @@ export async function removeBatch(
           directoryExistedInitially: r.directoryExists,
           dryRun,
           assumeYes,
-          force: forceInternalPrompts,
+          force,
           allowPrompt,
           output,
+          // Suppress the interactive trash-failure prompt for multi-target
+          // batches to prevent concurrent readline races on stdin. The user
+          // already confirmed removal in Phase 2; if trash fails without
+          // --force, the target is reported as failed instead of silently
+          // proceeding with a destructive git unregister.
+          skipTrashFailurePrompt: !isSingleTarget,
         }),
       ),
     ),

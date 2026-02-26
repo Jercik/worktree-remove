@@ -16,6 +16,11 @@ type PerformWorktreeRemovalInput = {
   force: boolean;
   allowPrompt: boolean;
   output: OutputWriter;
+  /** Suppress the interactive trash-failure prompt without enabling destructive
+   *  fallback. Used by batch mode to prevent concurrent readline races. When
+   *  true and `force` is false, a trash failure on a registered worktree is
+   *  treated as a non-recoverable error ({@link PerformWorktreeRemovalResult ok: false}). */
+  skipTrashFailurePrompt?: boolean;
 };
 
 type PerformWorktreeRemovalResult = { ok: boolean };
@@ -35,6 +40,7 @@ export async function performWorktreeRemoval(
     force,
     allowPrompt,
     output,
+    skipTrashFailurePrompt = false,
   } = parameters;
 
   output.info(`Removing ${status} '${targetDirectoryName}'...`);
@@ -54,6 +60,12 @@ export async function performWorktreeRemoval(
         movedToTrash = true;
         output.info("Directory moved to trash.");
       } else if (registeredPath) {
+        if (skipTrashFailurePrompt && !force) {
+          output.error(
+            `Could not move directory '${targetDirectoryName}' to trash: ${trashResult.reason}. Re-run with --force to allow Git to permanently delete it.`,
+          );
+          return { ok: false };
+        }
         const proceed = force
           ? true
           : await confirmAction(
