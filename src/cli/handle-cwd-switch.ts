@@ -8,12 +8,12 @@ import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 
+type TargetEntry = { path: string; name: string };
+
 type CwdSwitchInput = {
-  targetPaths: string[];
+  targets: TargetEntry[];
   invocationCwd: string;
   mainPath: string;
-  /** Display name shown in the pre-confirmation warning. */
-  targetName: string;
   dryRun: boolean;
   output: OutputWriter;
 };
@@ -27,19 +27,18 @@ type CwdSwitchInput = {
 export function prepareCwdSwitch(
   input: CwdSwitchInput,
 ): (() => void) | undefined {
-  const { targetPaths, invocationCwd, mainPath, targetName, dryRun, output } =
-    input;
+  const { targets, invocationCwd, mainPath, dryRun, output } = input;
 
-  const cwdInsideAnyTarget = targetPaths.some((targetPath) =>
+  const matchingTarget = targets.find((t) =>
     isPathEqualOrWithin({
-      basePath: targetPath,
+      basePath: t.path,
       candidatePath: invocationCwd,
       platform: process.platform,
     }),
   );
 
   if (
-    !cwdInsideAnyTarget ||
+    !matchingTarget ||
     normalizePathKey(invocationCwd) === normalizePathKey(mainPath)
   ) {
     return undefined;
@@ -47,7 +46,7 @@ export function prepareCwdSwitch(
 
   const switchVerb = dryRun ? "would" : "will";
   output.warn(
-    `Current directory is inside '${targetName}'. The command ${switchVerb} switch to '${mainPath}' before removing it, and your shell directory will not change.`,
+    `Current directory is inside '${matchingTarget.name}'. The command ${switchVerb} switch to '${mainPath}' before removing it, and your shell directory will not change.`,
   );
 
   return () => {

@@ -83,11 +83,12 @@ export async function removeBatch(
       : formatBatchConfirmation(resolved);
 
   const performCwdSwitch = prepareCwdSwitch({
-    targetPaths: resolved.map((r) => r.targetPath),
+    targets: resolved.map((r) => ({
+      path: r.targetPath,
+      name: r.displayInfo.targetDirectoryName,
+    })),
     invocationCwd,
     mainPath,
-    targetName:
-      firstTarget?.displayInfo.targetDirectoryName ?? "a target directory",
     dryRun,
     output,
   });
