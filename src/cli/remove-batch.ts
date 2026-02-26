@@ -108,6 +108,9 @@ export async function removeBatch(
   performCwdSwitch?.();
 
   // Phase 3: Remove targets in parallel (concurrency 4)
+  // Force-skip internal prompts for multi-target batches: the user already
+  // confirmed in Phase 2, and concurrent readline prompts would race on stdin.
+  const forceInternalPrompts = isSingleTarget ? force : true;
   const limit = pLimit(4);
   const results = await Promise.allSettled(
     resolved.map((r) =>
@@ -121,7 +124,7 @@ export async function removeBatch(
           directoryExistedInitially: r.directoryExists,
           dryRun,
           assumeYes,
-          force,
+          force: forceInternalPrompts,
           allowPrompt,
           output,
         }),
@@ -146,11 +149,14 @@ export async function removeBatch(
           output.error(
             `Failed to remove '${name}': ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
           );
+        } else {
+          output.error(`Failed to remove '${name}'.`);
         }
       }
     }
 
-    output.warn(`Removed ${succeeded.length} of ${resolved.length} worktrees.`);
+    const verb = dryRun ? "Would remove" : "Removed";
+    output.warn(`${verb} ${succeeded.length} of ${resolved.length} worktrees.`);
     if (failed.length > 0) {
       exitWithMessage(`Failed: ${failed.join(", ")}`);
     }

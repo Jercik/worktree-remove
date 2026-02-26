@@ -42,6 +42,7 @@ export async function performWorktreeRemoval(
   const directoryExistsBefore = await directoryExists(targetPath);
   let movedToTrash = false;
   let forceUnregister = force;
+  let unregisterFailed = false;
 
   if (directoryExistsBefore) {
     if (dryRun) {
@@ -97,6 +98,7 @@ export async function performWorktreeRemoval(
       if (unregisterResult.ok) {
         output.info("Unregistered from Git.");
       } else {
+        unregisterFailed = true;
         output.error(
           `Could not fully unregister from Git: ${unregisterResult.reason}.`,
         );
@@ -117,5 +119,5 @@ export async function performWorktreeRemoval(
   }
 
   output.info("Done.");
-  return { ok: true };
+  return { ok: !unregisterFailed };
 }

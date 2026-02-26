@@ -6,6 +6,7 @@
  */
 
 import { directoryExists } from "../fs/check-directory-exists.js";
+import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { assertRemovalSafe } from "../worktree/assert-removal-safe.js";
 import {
@@ -43,6 +44,7 @@ export async function resolveBatchTargets(
   input: ResolveBatchInput,
 ): Promise<ResolvedTarget[]> {
   const resolved: ResolvedTarget[] = [];
+  const seenPaths = new Set<string>();
 
   for (const target of input.targets) {
     const trimmedInput = target.trim();
@@ -55,6 +57,10 @@ export async function resolveBatchTargets(
       worktrees: input.worktrees,
       platform: process.platform,
     });
+
+    const pathKey = normalizePathKey(resolvedTarget.targetPath);
+    if (seenPaths.has(pathKey)) continue;
+    seenPaths.add(pathKey);
 
     assertRemovalSafe({
       targetPath: resolvedTarget.targetPath,
