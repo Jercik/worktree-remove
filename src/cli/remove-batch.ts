@@ -6,12 +6,14 @@
 
 import pLimit from "p-limit";
 import { confirmAction } from "./confirm-action.js";
+import { prepareCwdSwitch } from "./handle-cwd-switch.js";
 import type { OutputWriter } from "./output-writer.js";
-import { resolveBatchTargets } from "./resolve-batch-targets.js";
-import { normalizePathKey } from "../fs/normalize-path-key.js";
+import {
+  resolveBatchTargets,
+  type ResolvedTarget,
+} from "./resolve-batch-targets.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { exitWithMessage } from "../git/git-helpers.js";
-import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 import { performWorktreeRemoval } from "../worktree/perform-worktree-removal.js";
 
 type BatchOptions = {
@@ -69,67 +71,41 @@ export async function removeBatch(
     }
   }
 
-  // Phase 2: Single batch confirmation
-  const summaryLines = resolved.map((r) => {
-    const referenceSuffix = r.displayInfo.referenceInfo
-      ? `, ${r.displayInfo.referenceInfo}`
-      : "";
-    return `  ${r.displayInfo.status} '${r.displayInfo.targetDirectoryName}' (${r.displayInfo.displayPath}${referenceSuffix})`;
+  // Phase 2: Confirmation
+  const isSingleTarget = resolved.length === 1;
+  const firstTarget = resolved[0];
+
+  // For a single target, show the same compact prompt as the old single-target flow.
+  // For multiple targets, show a numbered list.
+  const confirmationMessage =
+    isSingleTarget && firstTarget
+      ? formatSingleConfirmation(firstTarget)
+      : formatBatchConfirmation(resolved);
+
+  const performCwdSwitch = prepareCwdSwitch({
+    targetPaths: resolved.map((r) => r.targetPath),
+    invocationCwd,
+    mainPath,
+    targetName:
+      firstTarget?.displayInfo.targetDirectoryName ?? "a target directory",
+    dryRun,
+    output,
   });
 
-  const confirmed = await confirmAction(
-    `Remove ${resolved.length} worktrees?\n${summaryLines.join("\n")}`,
-    {
-      allowPrompt,
-      assumeYes,
-      dryRun,
-      promptDisabledMessage:
-        "Confirmation required. Re-run with --yes or --dry-run to proceed in non-interactive mode.",
-    },
-  );
+  const confirmed = await confirmAction(confirmationMessage, {
+    allowPrompt,
+    assumeYes,
+    dryRun,
+    promptDisabledMessage:
+      "Confirmation required. Re-run with --yes or --dry-run to proceed in non-interactive mode.",
+  });
 
   if (!confirmed) {
     output.warn("Removal cancelled.");
     return;
   }
 
-  // Phase 2.5: Handle cwd-inside-target
-  const cwdInsideAnyTarget = resolved.some((r) =>
-    isPathEqualOrWithin({
-      basePath: r.targetPath,
-      candidatePath: invocationCwd,
-      platform: process.platform,
-    }),
-  );
-  const mustSwitchToMain =
-    cwdInsideAnyTarget &&
-    normalizePathKey(invocationCwd) !== normalizePathKey(mainPath);
-
-  if (mustSwitchToMain) {
-    if (dryRun) {
-      output.info(
-        `Would switch process working directory to '${mainPath}' before removal.`,
-      );
-      output.warn(
-        `Dry run only. In a real run, your shell may still point to the removed directory. Switch it to '${mainPath}' or another existing path.`,
-      );
-    } else {
-      try {
-        process.chdir(mainPath);
-      } catch (error) {
-        const reason = error instanceof Error ? error.message : String(error);
-        exitWithMessage(
-          `Could not switch working directory to main worktree '${mainPath}': ${reason}`,
-        );
-      }
-      output.info(
-        `Switched process working directory to '${mainPath}' before removal.`,
-      );
-      output.warn(
-        `After removal, your shell may still point to a removed directory. Switch it to '${mainPath}' or another existing path.`,
-      );
-    }
-  }
+  performCwdSwitch?.();
 
   // Phase 3: Remove targets in parallel (concurrency 4)
   const limit = pLimit(4);
@@ -153,29 +129,47 @@ export async function removeBatch(
     ),
   );
 
-  // Phase 4: Report summary
-  const succeeded: string[] = [];
-  const failed: string[] = [];
-  for (const [index, result] of results.entries()) {
-    const resolvedEntry = resolved[index];
-    if (!resolvedEntry) continue;
-    const name = resolvedEntry.displayInfo.targetDirectoryName;
-    if (result.status === "fulfilled" && result.value.ok) {
-      succeeded.push(name);
-    } else {
-      failed.push(name);
-      if (result.status === "rejected") {
-        output.error(
-          `Failed to remove '${name}': ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
-        );
+  // Phase 4: Report summary (skip for single targets — performWorktreeRemoval
+  // already reports its own outcome)
+  if (!isSingleTarget) {
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+    for (const [index, result] of results.entries()) {
+      const resolvedEntry = resolved[index];
+      if (!resolvedEntry) continue;
+      const name = resolvedEntry.displayInfo.targetDirectoryName;
+      if (result.status === "fulfilled" && result.value.ok) {
+        succeeded.push(name);
+      } else {
+        failed.push(name);
+        if (result.status === "rejected") {
+          output.error(
+            `Failed to remove '${name}': ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
+          );
+        }
       }
     }
-  }
 
-  output.warn(
-    `Removed ${succeeded.length} of ${resolved.length} worktree${resolved.length > 1 ? "s" : ""}.`,
-  );
-  if (failed.length > 0) {
-    exitWithMessage(`Failed: ${failed.join(", ")}`);
+    output.warn(`Removed ${succeeded.length} of ${resolved.length} worktrees.`);
+    if (failed.length > 0) {
+      exitWithMessage(`Failed: ${failed.join(", ")}`);
+    }
   }
+}
+
+function formatSingleConfirmation(target: ResolvedTarget): string {
+  const { status, displayPath, targetDirectoryName, referenceInfo } =
+    target.displayInfo;
+  const referenceSuffix = referenceInfo ? `, ${referenceInfo}` : "";
+  return `Remove ${status} '${targetDirectoryName}' (${displayPath}${referenceSuffix})?`;
+}
+
+function formatBatchConfirmation(targets: ResolvedTarget[]): string {
+  const summaryLines = targets.map((r) => {
+    const referenceSuffix = r.displayInfo.referenceInfo
+      ? `, ${r.displayInfo.referenceInfo}`
+      : "";
+    return `  ${r.displayInfo.status} '${r.displayInfo.targetDirectoryName}' (${r.displayInfo.displayPath}${referenceSuffix})`;
+  });
+  return `Remove ${targets.length} worktrees?\n${summaryLines.join("\n")}`;
 }

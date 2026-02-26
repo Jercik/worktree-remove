@@ -21,7 +21,7 @@ type WorktreeEntry = {
   isDetached: boolean;
 };
 
-type ResolvedTarget = {
+export type ResolvedTarget = {
   input: string;
   targetPath: string;
   registeredPath: string | undefined;

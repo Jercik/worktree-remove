@@ -107,23 +107,6 @@ const program = new Command()
         process.exit(0);
       }
 
-      // Single target: use the existing removeWorktree flow for full backward compat
-      const singleTarget =
-        selectedTargets.length === 1 ? selectedTargets[0] : undefined;
-      if (singleTarget !== undefined) {
-        const { removeWorktree } =
-          await import("./worktree/remove-worktree.js");
-        await removeWorktree(singleTarget, {
-          dryRun,
-          assumeYes,
-          force,
-          allowPrompt,
-          output,
-        });
-        return;
-      }
-
-      // Multi-target batch path
       await removeBatch(selectedTargets, {
         dryRun,
         assumeYes,
