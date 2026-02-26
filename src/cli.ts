@@ -2,22 +2,22 @@
 /**
  * worktree-remove.ts
  *
- * Remove a Git worktree and/or its directory for a given target.
+ * Remove one or more Git worktrees and/or their directories for given targets.
  * Handles registered worktrees, detached HEAD worktrees, and orphaned directories.
  *
  * This script:
- * 1. Resolves the target (branch/path/directory name)
- * 2. Checks if it's registered as a Git worktree
- * 3. Unregisters it if needed
- * 4. Offers to delete the directory if it exists
+ * 1. Resolves the targets (branch/path/directory name)
+ * 2. Checks if they're registered as Git worktrees
+ * 3. Unregisters them if needed
+ * 4. Offers to delete the directories if they exist
  */
 
 import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 import packageJson from "../package.json" with { type: "json" };
 import { createOutputWriter } from "./cli/output-writer.js";
-import { removeWorktree } from "./worktree/remove-worktree.js";
-import { selectWorktree } from "./cli/select-worktree.js";
+import { removeBatch } from "./cli/remove-batch.js";
+import { selectWorktrees } from "./cli/select-worktree.js";
 import { ensureGitAvailable } from "./git/git-helpers.js";
 
 const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
@@ -42,10 +42,10 @@ const program = new Command()
   .description(packageJson.description)
   .version(packageJson.version)
   .argument(
-    "[target]",
-    "branch name, worktree path, or directory name of the worktree to remove",
+    "[target...]",
+    "branch names, worktree paths, or directory names of worktrees to remove",
   )
-  .option("-i, --interactive", "interactively select a worktree to remove")
+  .option("-i, --interactive", "interactively select worktrees to remove")
   .option("--no-interactive", "disable all prompts and interactive selection")
   .option("-y, --yes", "assume yes for all confirmation prompts")
   .option(
@@ -57,7 +57,7 @@ const program = new Command()
   .option("--quiet", "suppress non-error output")
   .showHelpAfterError("(add --help for additional information)")
   .showSuggestionAfterError()
-  .action(async (target: string | undefined, options: CliOptions) => {
+  .action(async (targets: string[], options: CliOptions) => {
     try {
       ensureGitAvailable();
 
@@ -84,30 +84,47 @@ const program = new Command()
         process.exit(1);
       }
 
-      if (options.interactive && target) {
+      if (options.interactive && targets.length > 0) {
         output.warn(
           chalk.yellow(
-            `Ignoring target '${target}' because --interactive was specified.`,
+            `Ignoring target${targets.length > 1 ? "s" : ""} '${targets.join("', '")}' because --interactive was specified.`,
           ),
         );
       }
 
-      if (!target && !interactiveSelection) {
+      if (targets.length === 0 && !interactiveSelection) {
         output.error(
           "Missing target worktree. Provide a target or use --interactive.",
         );
         process.exit(1);
       }
 
-      const targetInput = interactiveSelection
-        ? await selectWorktree(output)
-        : target;
+      const selectedTargets = interactiveSelection
+        ? await selectWorktrees(output)
+        : targets;
 
-      if (!targetInput) {
+      if (selectedTargets.length === 0) {
         process.exit(0);
       }
 
-      await removeWorktree(targetInput, {
+      // Single target: use the existing removeWorktree flow for full backward compat
+      const singleTarget =
+        selectedTargets.length === 1 ? selectedTargets[0] : undefined;
+      if (singleTarget !== undefined) {
+        const { removeWorktree } =
+          await import("./worktree/remove-worktree.js");
+        await removeWorktree(singleTarget, {
+          dryRun,
+          assumeYes,
+          force,
+          allowPrompt,
+          output,
+        });
+        return;
+      }
+
+      // Multi-target batch path
+      await removeBatch(selectedTargets, {
         dryRun,
         assumeYes,
         force,
@@ -127,13 +144,14 @@ program.addHelpText(
 Examples:
   worktree-remove --interactive
   worktree-remove feature/login
-  worktree-remove --dry-run feature/login
+  worktree-remove feature/login feature/signup
+  worktree-remove --dry-run feature/login feature/signup
   worktree-remove --yes feature/login
 
 Notes:
   Requires git. Override the path with WORKTREE_REMOVE_GIT_PATH.
   Output is quiet by default; use --verbose or --dry-run for details.
-  If your current directory is inside the target directory, the process switches to the main worktree before deletion.
+  If your current directory is inside a target directory, the process switches to the main worktree before deletion.
   In CI or non-interactive shells, pass --yes or --dry-run.`,
 );
 
