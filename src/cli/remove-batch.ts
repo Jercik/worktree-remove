@@ -139,8 +139,19 @@ export async function removeBatch(
   );
 
   // Phase 4: Report summary (skip for single targets — performWorktreeRemoval
-  // already reports its own outcome)
-  if (!isSingleTarget) {
+  // already reports its own outcome, but still check exit code)
+  if (isSingleTarget) {
+    const singleResult = results[0];
+    if (
+      !singleResult ||
+      singleResult.status === "rejected" ||
+      !singleResult.value.ok
+    ) {
+      exitWithMessage(
+        `Failed to remove '${firstTarget?.displayInfo.targetDirectoryName ?? "target"}'.`,
+      );
+    }
+  } else {
     const succeeded: string[] = [];
     const failed: string[] = [];
     for (const [index, result] of results.entries()) {
