@@ -15,7 +15,7 @@ type RemovalDisplayInput = {
   isPathInputTarget: boolean;
 };
 
-type RemovalDisplayInfo = {
+export type RemovalDisplayInfo = {
   status: string;
   referenceInfo: string;
   displayPath: string;

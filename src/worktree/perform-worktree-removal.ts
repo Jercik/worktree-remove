@@ -16,11 +16,21 @@ type PerformWorktreeRemovalInput = {
   force: boolean;
   allowPrompt: boolean;
   output: OutputWriter;
+  /** Suppress the interactive trash-failure prompt without enabling destructive
+   *  fallback. Used by batch mode to prevent concurrent readline races. When
+   *  true and `force` is false, a trash failure on a registered worktree is
+   *  treated as a non-recoverable error ({@link PerformWorktreeRemovalResult status: "failed"}). */
+  skipTrashFailurePrompt?: boolean;
 };
+
+export type PerformWorktreeRemovalResult =
+  | { status: "ok" }
+  | { status: "failed" }
+  | { status: "cancelled" };
 
 export async function performWorktreeRemoval(
   parameters: PerformWorktreeRemovalInput,
-): Promise<void> {
+): Promise<PerformWorktreeRemovalResult> {
   const {
     status,
     targetDirectoryName,
@@ -33,6 +43,7 @@ export async function performWorktreeRemoval(
     force,
     allowPrompt,
     output,
+    skipTrashFailurePrompt = false,
   } = parameters;
 
   output.info(`Removing ${status} '${targetDirectoryName}'...`);
@@ -40,6 +51,7 @@ export async function performWorktreeRemoval(
   const directoryExistsBefore = await directoryExists(targetPath);
   let movedToTrash = false;
   let forceUnregister = force;
+  let unregisterFailed = false;
 
   if (directoryExistsBefore) {
     if (dryRun) {
@@ -51,6 +63,12 @@ export async function performWorktreeRemoval(
         movedToTrash = true;
         output.info("Directory moved to trash.");
       } else if (registeredPath) {
+        if (skipTrashFailurePrompt && !force) {
+          output.error(
+            `Could not move directory '${targetDirectoryName}' to trash: ${trashResult.reason}. Re-run with --force to allow Git to permanently delete it.`,
+          );
+          return { status: "failed" };
+        }
         const proceed = force
           ? true
           : await confirmAction(
@@ -65,7 +83,7 @@ export async function performWorktreeRemoval(
             );
         if (!proceed) {
           output.warn("Removal cancelled.");
-          return;
+          return { status: "cancelled" };
         }
         // User confirmed git may permanently delete the directory, so force
         // the unregister to handle dirty worktrees.
@@ -79,7 +97,7 @@ export async function performWorktreeRemoval(
         output.error(
           `Could not move directory to trash: ${trashResult.reason}. Remove manually.`,
         );
-        return;
+        return { status: "failed" };
       }
     }
   }
@@ -95,6 +113,7 @@ export async function performWorktreeRemoval(
       if (unregisterResult.ok) {
         output.info("Unregistered from Git.");
       } else {
+        unregisterFailed = true;
         output.error(
           `Could not fully unregister from Git: ${unregisterResult.reason}.`,
         );
@@ -115,4 +134,5 @@ export async function performWorktreeRemoval(
   }
 
   output.info("Done.");
+  return { status: unregisterFailed ? "failed" : "ok" };
 }

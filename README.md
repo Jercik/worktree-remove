@@ -1,6 +1,6 @@
 # worktree-remove
 
-Safely remove a Git worktree and its directory, handling uncommitted changes and orphaned folders.
+Safely remove one or more Git worktrees and their directories, handling uncommitted changes and orphaned folders.
 
 ## What it does
 
@@ -47,14 +47,14 @@ By default, the CLI is quiet and requires an explicit target (non-interactive se
 
 ### Interactive Mode (Recommended)
 
-Use the `-i` flag to open an interactive list of worktrees:
+Use the `-i` flag to open an interactive multi-select list of worktrees:
 
 ```bash
 # inside any worktree for the repository
 worktree-remove -i
 ```
 
-This allows you to easily select which worktree to remove from a list.
+This allows you to select one or more worktrees to remove from a list. All selected worktrees are checked for uncommitted changes upfront, confirmed in a single batch, and removed in parallel.
 
 ### Manual Mode
 
@@ -68,13 +68,17 @@ Note: If you pass a path that exists but isn't a registered worktree, it will be
 For safety, unregistered directories inside the main worktree are refused.
 
 ```bash
-worktree-remove <target>
+worktree-remove <target...>
 ```
 
 Example:
 
 ```bash
+# remove a single worktree
 worktree-remove feature/login-form
+
+# remove multiple worktrees at once
+worktree-remove feature/login-form feature/signup
 ```
 
 Detached HEAD example:
@@ -91,7 +95,7 @@ worktree-remove my-app-test-29
 
 ## Options
 
-- `-i, --interactive` interactively select a worktree to remove
+- `-i, --interactive` interactively select worktrees to remove (multi-select)
 - `--no-interactive` disable all prompts and interactive selection
 - `-y, --yes` assume yes for all confirmation prompts
 - `-f, --force` skip safety prompts on failures and uncommitted changes (final confirmation still required unless `--yes` or `--dry-run`)
@@ -107,12 +111,17 @@ worktree-remove feature/login-form
 ```
 
 ```bash
-# preview what would be removed
-worktree-remove --dry-run feature/login-form
+# remove multiple worktrees at once
+worktree-remove feature/login-form feature/signup hotfix/typo
 ```
 
 ```bash
-# use an interactive selector
+# preview what would be removed
+worktree-remove --dry-run feature/login-form feature/signup
+```
+
+```bash
+# use an interactive multi-select
 worktree-remove --interactive
 ```
 

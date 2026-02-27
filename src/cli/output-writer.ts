@@ -13,6 +13,23 @@ export type OutputWriter = {
   isQuiet: boolean;
 };
 
+export function prefixOutput(
+  output: OutputWriter,
+  prefix: string,
+): OutputWriter {
+  const wrap = (write: (message: string) => void) => (message: string) => {
+    write(`[${prefix}] ${message}`);
+  };
+  return {
+    info: wrap(output.info),
+    warn: wrap(output.warn),
+    error: wrap(output.error),
+    isDryRun: output.isDryRun,
+    isVerbose: output.isVerbose,
+    isQuiet: output.isQuiet,
+  };
+}
+
 const writeError = (message: string) => {
   console.error(message);
 };

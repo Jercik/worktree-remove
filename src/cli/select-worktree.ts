@@ -1,9 +1,9 @@
 /**
- * Interactively select a worktree to remove (CLI layer)
+ * Interactively select worktrees to remove (CLI layer)
  */
 
 import path from "node:path";
-import { select } from "@inquirer/prompts";
+import { checkbox } from "@inquirer/prompts";
 import chalk from "chalk";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import type { OutputWriter } from "./output-writer.js";
@@ -12,9 +12,7 @@ import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
 chalk.level = shouldUseColor ? 3 : 0;
 
-export async function selectWorktree(
-  output: OutputWriter,
-): Promise<string | undefined> {
+export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
   const { mainPath, worktrees } = getWorktreeInfo();
   const cwd = process.cwd();
 
@@ -23,13 +21,12 @@ export async function selectWorktree(
   );
 
   if (sortedWorktrees.length === 0) {
-    // @inquirer/select requires at least one selectable choice.
     output.warn(
       chalk.yellow(
         "No removable worktrees found. The main worktree is not selectable.",
       ),
     );
-    return undefined;
+    return [];
   }
 
   const currentLinkedWorktreePath = sortedWorktrees
@@ -78,12 +75,13 @@ export async function selectWorktree(
     }),
   ];
 
-  return select(
+  return checkbox(
     {
-      message: "Select a worktree to remove:",
+      message: "Select worktrees to remove:",
       choices,
       pageSize: 15,
       loop: false,
+      required: true,
     },
     {
       input: process.stdin,
