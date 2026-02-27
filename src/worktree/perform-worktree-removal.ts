@@ -19,11 +19,14 @@ type PerformWorktreeRemovalInput = {
   /** Suppress the interactive trash-failure prompt without enabling destructive
    *  fallback. Used by batch mode to prevent concurrent readline races. When
    *  true and `force` is false, a trash failure on a registered worktree is
-   *  treated as a non-recoverable error ({@link PerformWorktreeRemovalResult ok: false}). */
+   *  treated as a non-recoverable error ({@link PerformWorktreeRemovalResult status: "failed"}). */
   skipTrashFailurePrompt?: boolean;
 };
 
-type PerformWorktreeRemovalResult = { ok: boolean };
+type PerformWorktreeRemovalResult =
+  | { status: "ok" }
+  | { status: "failed" }
+  | { status: "cancelled" };
 
 export async function performWorktreeRemoval(
   parameters: PerformWorktreeRemovalInput,
@@ -64,7 +67,7 @@ export async function performWorktreeRemoval(
           output.error(
             `Could not move directory '${targetDirectoryName}' to trash: ${trashResult.reason}. Re-run with --force to allow Git to permanently delete it.`,
           );
-          return { ok: false };
+          return { status: "failed" };
         }
         const proceed = force
           ? true
@@ -80,7 +83,7 @@ export async function performWorktreeRemoval(
             );
         if (!proceed) {
           output.warn("Removal cancelled.");
-          return { ok: false };
+          return { status: "cancelled" };
         }
         // User confirmed git may permanently delete the directory, so force
         // the unregister to handle dirty worktrees.
@@ -94,7 +97,7 @@ export async function performWorktreeRemoval(
         output.error(
           `Could not move directory to trash: ${trashResult.reason}. Remove manually.`,
         );
-        return { ok: false };
+        return { status: "failed" };
       }
     }
   }
@@ -131,5 +134,5 @@ export async function performWorktreeRemoval(
   }
 
   output.info("Done.");
-  return { ok: !unregisterFailed };
+  return { status: unregisterFailed ? "failed" : "ok" };
 }

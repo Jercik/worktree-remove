@@ -145,12 +145,13 @@ export async function removeBatch(
     if (
       !singleResult ||
       singleResult.status === "rejected" ||
-      !singleResult.value.ok
+      singleResult.value.status === "failed"
     ) {
       exitWithMessage(
         `Failed to remove '${firstTarget?.displayInfo.targetDirectoryName ?? "target"}'.`,
       );
     }
+    // "cancelled" — user declined a prompt; exit cleanly (code 0)
   } else {
     const succeeded: string[] = [];
     const failed: string[] = [];
@@ -158,7 +159,7 @@ export async function removeBatch(
       const resolvedEntry = resolved[index];
       if (!resolvedEntry) continue;
       const name = resolvedEntry.displayInfo.targetDirectoryName;
-      if (result.status === "fulfilled" && result.value.ok) {
+      if (result.status === "fulfilled" && result.value.status === "ok") {
         succeeded.push(name);
       } else {
         failed.push(name);
