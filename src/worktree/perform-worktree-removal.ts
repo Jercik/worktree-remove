@@ -23,7 +23,7 @@ type PerformWorktreeRemovalInput = {
   skipTrashFailurePrompt?: boolean;
 };
 
-type PerformWorktreeRemovalResult =
+export type PerformWorktreeRemovalResult =
   | { status: "ok" }
   | { status: "failed" }
   | { status: "cancelled" };

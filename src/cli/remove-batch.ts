@@ -8,6 +8,8 @@ import pLimit from "p-limit";
 import { confirmAction } from "./confirm-action.js";
 import { prepareCwdSwitch } from "./handle-cwd-switch.js";
 import type { OutputWriter } from "./output-writer.js";
+import { prefixOutput } from "./output-writer.js";
+import { reportBatchResults } from "./report-batch-results.js";
 import {
   resolveBatchTargets,
   type ResolvedTarget,
@@ -126,7 +128,9 @@ export async function removeBatch(
           assumeYes,
           force,
           allowPrompt,
-          output,
+          output: isSingleTarget
+            ? output
+            : prefixOutput(output, r.displayInfo.targetDirectoryName),
           // Suppress the interactive trash-failure prompt for multi-target
           // batches to prevent concurrent readline races on stdin. The user
           // already confirmed removal in Phase 2; if trash fails without
@@ -153,31 +157,12 @@ export async function removeBatch(
     }
     // "cancelled" — user declined a prompt; exit cleanly (code 0)
   } else {
-    const succeeded: string[] = [];
-    const failed: string[] = [];
-    for (const [index, result] of results.entries()) {
-      const resolvedEntry = resolved[index];
-      if (!resolvedEntry) continue;
-      const name = resolvedEntry.displayInfo.targetDirectoryName;
-      if (result.status === "fulfilled" && result.value.status === "ok") {
-        succeeded.push(name);
-      } else {
-        failed.push(name);
-        if (result.status === "rejected") {
-          output.error(
-            `Failed to remove '${name}': ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`,
-          );
-        } else {
-          output.error(`Failed to remove '${name}'.`);
-        }
-      }
-    }
-
-    const verb = dryRun ? "Would remove" : "Removed";
-    output.warn(`${verb} ${succeeded.length} of ${resolved.length} worktrees.`);
-    if (failed.length > 0) {
-      exitWithMessage(`Failed: ${failed.join(", ")}`);
-    }
+    const entries = results.map((result, index) => ({
+      name:
+        resolved[index]?.displayInfo.targetDirectoryName ?? "unknown target",
+      result,
+    }));
+    reportBatchResults(entries, { dryRun, output });
   }
 }
 
