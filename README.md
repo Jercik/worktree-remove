@@ -63,6 +63,7 @@ You can also specify the worktree directly by:
 - branch name (for worktrees on a branch)
 - worktree path (works for detached HEAD worktrees)
 - directory name in the parent folder (useful when there's no branch)
+- `.` (current directory — removes the worktree you are in)
 
 Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation. Path targets can point anywhere, so use caution when providing absolute or home-relative paths.
 For safety, unregistered directories inside the main worktree are refused.
@@ -91,6 +92,13 @@ Sibling directory name example:
 
 ```bash
 worktree-remove my-app-test-29
+```
+
+Current worktree example:
+
+```bash
+# remove the worktree you are currently in (no need to know its name)
+worktree-remove . --yes
 ```
 
 ## Options
@@ -123,6 +131,11 @@ worktree-remove --dry-run feature/login-form feature/signup
 ```bash
 # use an interactive multi-select
 worktree-remove --interactive
+```
+
+```bash
+# remove the worktree you are currently in
+worktree-remove . --yes
 ```
 
 ```bash

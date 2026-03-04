@@ -242,6 +242,34 @@ describe("resolveWorktreeTarget", () => {
     });
   });
 
+  it("resolves current directory when input is '.'", () => {
+    const result = resolveWorktreeTarget({
+      input: ".",
+      cwd: "/Users/acme/repo-feature/foo",
+      mainPath: "/Users/acme/repo",
+      worktrees: [
+        {
+          path: "/Users/acme/repo-feature/foo",
+          head: "6666666666666666666666666666666666666666",
+          branch: "feature/foo",
+          isDetached: false,
+        },
+      ],
+      platform: "linux",
+    });
+
+    expect(result).toEqual({
+      kind: "registered",
+      worktree: {
+        path: "/Users/acme/repo-feature/foo",
+        head: "6666666666666666666666666666666666666666",
+        branch: "feature/foo",
+        isDetached: false,
+      },
+      isPathInput: true,
+    });
+  });
+
   it("expands quoted tilde paths", () => {
     const homedirSpy = vi.spyOn(os, "homedir").mockReturnValue("/Users/acme");
 
