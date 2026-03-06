@@ -727,7 +727,7 @@ const myFunc = (): string => {
 
 **Exceptions:**
 
-- React components returning JSX need no annotation—the return type is always `JSX.Element` or similar.
+- React components usually need no annotation. Let TypeScript infer the return type; components may return `ReactNode`, `null`, or async server-rendered results depending on the framework.
 - React hooks returning objects should still annotate: `(): { state: string; }`.
 
 # Rule: TypeScript Config File Patterns
