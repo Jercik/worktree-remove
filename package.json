@@ -1,4 +1,21 @@
 {
+  "scripts": {
+    "prepack": "pnpm run rebuild",
+    "prepare": "git config core.hooksPath .githooks",
+    "build": "tsc -p tsconfig.app.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "fta": "fta-check --threshold 55",
+    "knip": "knip",
+    "lint": "eslint",
+    "rebuild": "pnpm run clean && pnpm run build",
+    "start": "pnpm run rebuild && node bin/worktree-remove",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --noEmit"
+  },
   "name": "worktree-remove",
   "author": "Łukasz Jerciński",
   "license": "MIT",
@@ -22,23 +39,6 @@
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "prepare": "git config core.hooksPath .githooks",
-    "prepack": "pnpm run rebuild",
-    "build": "tsc -p tsconfig.app.json",
-    "clean": "rm -rf dist *.tsbuildinfo",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "fta": "fta-check --threshold 55",
-    "knip": "knip",
-    "lint": "eslint",
-    "rebuild": "pnpm run clean && pnpm run build",
-    "start": "pnpm run rebuild && node bin/worktree-remove",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest",
-    "typecheck": "tsc -b --noEmit"
-  },
   "keywords": [
     "git",
     "worktree",
