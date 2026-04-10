@@ -16,7 +16,7 @@ describe("assertRemovalSafe", () => {
         mainPath: "/Users/acme/repo",
         registeredPath: undefined,
       });
-    }).toThrowError("Refusing to remove the main worktree.");
+    }).toThrow("Refusing to remove the main worktree.");
   });
 
   it("throws when target contains the main worktree", () => {
@@ -26,9 +26,7 @@ describe("assertRemovalSafe", () => {
         mainPath: "/Users/acme/repo",
         registeredPath: undefined,
       });
-    }).toThrowError(
-      "Refusing to remove a directory containing the main worktree.",
-    );
+    }).toThrow("Refusing to remove a directory containing the main worktree.");
   });
 
   it("throws when unregistered target is inside the main worktree", () => {
@@ -38,7 +36,7 @@ describe("assertRemovalSafe", () => {
         mainPath: "/Users/acme/repo",
         registeredPath: undefined,
       });
-    }).toThrowError(
+    }).toThrow(
       "Refusing to remove an unregistered directory inside the main worktree.",
     );
   });
@@ -50,7 +48,7 @@ describe("assertRemovalSafe", () => {
         mainPath: "/Users/acme/repo",
         registeredPath: "/Users/acme/repo/feature",
       });
-    }).not.toThrowError();
+    }).not.toThrow();
   });
 
   it("allows directories outside the main worktree", () => {
@@ -60,6 +58,6 @@ describe("assertRemovalSafe", () => {
         mainPath: "/Users/acme/repo",
         registeredPath: undefined,
       });
-    }).not.toThrowError();
+    }).not.toThrow();
   });
 });

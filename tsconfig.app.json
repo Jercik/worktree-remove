@@ -8,6 +8,8 @@
     "declarationMap": true,
     "sourceMap": true,
 
+    "types": ["node"],
+
     /* Not running in the DOM */
     "lib": ["es2023"]
   },
