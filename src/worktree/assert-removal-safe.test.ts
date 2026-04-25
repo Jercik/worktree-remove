@@ -36,9 +36,7 @@ describe("assertRemovalSafe", () => {
         mainPath: "/Users/acme/repo",
         registeredPath: undefined,
       });
-    }).toThrow(
-      "Refusing to remove an unregistered directory inside the main worktree.",
-    );
+    }).toThrow("Refusing to remove an unregistered directory inside the main worktree.");
   });
 
   it("allows registered worktrees inside the main worktree", () => {

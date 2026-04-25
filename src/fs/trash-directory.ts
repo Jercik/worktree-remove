@@ -6,9 +6,7 @@ import trash from "trash";
 
 type TrashResult = { ok: true } | { ok: false; reason: string };
 
-export async function trashDirectory(
-  directoryPath: string,
-): Promise<TrashResult> {
+export async function trashDirectory(directoryPath: string): Promise<TrashResult> {
   try {
     await trash([directoryPath], { glob: false });
     return { ok: true };

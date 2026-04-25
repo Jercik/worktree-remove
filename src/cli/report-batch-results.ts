@@ -2,10 +2,10 @@ import type { PerformWorktreeRemovalResult } from "../worktree/perform-worktree-
 import { exitWithMessage } from "../git/git-helpers.js";
 import type { OutputWriter } from "./output-writer.js";
 
-type BatchResultEntry = {
+interface BatchResultEntry {
   name: string;
   result: PromiseSettledResult<PerformWorktreeRemovalResult>;
-};
+}
 
 export function reportBatchResults(
   entries: BatchResultEntry[],

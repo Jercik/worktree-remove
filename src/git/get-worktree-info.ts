@@ -6,12 +6,12 @@ import { git, exitWithMessage } from "./git-helpers.js";
 import { normalizeGitPath } from "./normalize-git-path.js";
 import { parseWorktreeListPorcelain } from "./parse-worktree-list.js";
 
-type WorktreeEntry = {
+interface WorktreeEntry {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
-};
+}
 
 interface WorktreeInfo {
   mainPath: string;
@@ -42,12 +42,12 @@ export function getWorktreeInfo(): WorktreeInfo {
 
   const mainPath = normalizeGitPath(parsed.mainPath);
 
-  const normalizedWorktrees: WorktreeEntry[] = parsed.worktrees
-    .slice(1)
-    .map((worktree) => ({
-      ...worktree,
-      path: normalizeGitPath(worktree.path),
-    }));
+  const normalizedWorktrees: WorktreeEntry[] = parsed.worktrees.slice(1).map((worktree) => ({
+    path: normalizeGitPath(worktree.path),
+    head: worktree.head,
+    branch: worktree.branch,
+    isDetached: worktree.isDetached,
+  }));
 
   return { mainPath, worktrees: normalizedWorktrees };
 }

@@ -2,11 +2,11 @@ import { exitWithMessage } from "../git/git-helpers.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { isPathStrictlyWithin } from "./is-path-equal-or-within.js";
 
-type RemovalSafetyInput = {
+interface RemovalSafetyInput {
   targetPath: string;
   mainPath: string;
   registeredPath: string | undefined;
-};
+}
 
 export function assertRemovalSafe(input: RemovalSafetyInput): void {
   if (normalizePathKey(input.targetPath) === normalizePathKey(input.mainPath)) {
@@ -20,9 +20,7 @@ export function assertRemovalSafe(input: RemovalSafetyInput): void {
       platform: process.platform,
     })
   ) {
-    exitWithMessage(
-      "Refusing to remove a directory containing the main worktree.",
-    );
+    exitWithMessage("Refusing to remove a directory containing the main worktree.");
   }
 
   if (
@@ -33,8 +31,6 @@ export function assertRemovalSafe(input: RemovalSafetyInput): void {
       platform: process.platform,
     })
   ) {
-    exitWithMessage(
-      "Refusing to remove an unregistered directory inside the main worktree.",
-    );
+    exitWithMessage("Refusing to remove an unregistered directory inside the main worktree.");
   }
 }

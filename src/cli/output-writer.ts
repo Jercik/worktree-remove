@@ -1,22 +1,19 @@
-type OutputWriterOptions = {
+interface OutputWriterOptions {
   verbose: boolean;
   quiet: boolean;
   dryRun: boolean;
-};
+}
 
-export type OutputWriter = {
+export interface OutputWriter {
   info: (message: string) => void;
   warn: (message: string) => void;
   error: (message: string) => void;
   isDryRun: boolean;
   isVerbose: boolean;
   isQuiet: boolean;
-};
+}
 
-export function prefixOutput(
-  output: OutputWriter,
-  prefix: string,
-): OutputWriter {
+export function prefixOutput(output: OutputWriter, prefix: string): OutputWriter {
   const wrap = (write: (message: string) => void) => (message: string) => {
     write(`[${prefix}] ${message}`);
   };
@@ -39,13 +36,19 @@ export function createOutputWriter(options: OutputWriterOptions): OutputWriter {
   const prefix = options.dryRun ? "DRY RUN: " : "";
 
   const info = (message: string) => {
-    if (options.quiet) return;
-    if (!shouldInfo) return;
+    if (options.quiet) {
+      return;
+    }
+    if (!shouldInfo) {
+      return;
+    }
     console.error(`${prefix}${message}`);
   };
 
   const warn = (message: string) => {
-    if (options.quiet) return;
+    if (options.quiet) {
+      return;
+    }
     console.error(message);
   };
 

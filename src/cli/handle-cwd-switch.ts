@@ -8,15 +8,18 @@ import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 
-type TargetEntry = { path: string; name: string };
+interface TargetEntry {
+  path: string;
+  name: string;
+}
 
-type CwdSwitchInput = {
+interface CwdSwitchInput {
   targets: TargetEntry[];
   invocationCwd: string;
   mainPath: string;
   dryRun: boolean;
   output: OutputWriter;
-};
+}
 
 /**
  * Warn about cwd being inside a target (shown before the confirmation prompt),
@@ -24,9 +27,7 @@ type CwdSwitchInput = {
  *
  * Returns `undefined` if no switch is needed.
  */
-export function prepareCwdSwitch(
-  input: CwdSwitchInput,
-): (() => void) | undefined {
+export function prepareCwdSwitch(input: CwdSwitchInput): (() => void) | undefined {
   const { targets, invocationCwd, mainPath, dryRun, output } = input;
 
   const matchingTarget = targets.find((t) =>
@@ -37,10 +38,7 @@ export function prepareCwdSwitch(
     }),
   );
 
-  if (
-    !matchingTarget ||
-    normalizePathKey(invocationCwd) === normalizePathKey(mainPath)
-  ) {
+  if (!matchingTarget || normalizePathKey(invocationCwd) === normalizePathKey(mainPath)) {
     return undefined;
   }
 
@@ -51,9 +49,7 @@ export function prepareCwdSwitch(
 
   return () => {
     if (dryRun) {
-      output.info(
-        `Would switch process working directory to '${mainPath}' before removal.`,
-      );
+      output.info(`Would switch process working directory to '${mainPath}' before removal.`);
       output.warn(
         `Dry run only. In a real run, your shell may still point to the removed directory. Switch it to '${mainPath}' or another existing path.`,
       );
@@ -66,9 +62,7 @@ export function prepareCwdSwitch(
           `Could not switch working directory to main worktree '${mainPath}': ${reason}`,
         );
       }
-      output.info(
-        `Switched process working directory to '${mainPath}' before removal.`,
-      );
+      output.info(`Switched process working directory to '${mainPath}' before removal.`);
       output.warn(
         `After removal, your shell may still point to a removed directory. Switch it to '${mainPath}' or another existing path.`,
       );

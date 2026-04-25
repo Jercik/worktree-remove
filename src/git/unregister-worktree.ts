@@ -8,9 +8,9 @@
 
 import { git } from "./git-helpers.js";
 
-type UnregisterWorktreeOptions = {
+interface UnregisterWorktreeOptions {
   force: boolean;
-};
+}
 
 type UnregisterResult = { ok: true } | { ok: false; reason: string };
 
@@ -20,14 +20,7 @@ export function unregisterWorktree(
   options: UnregisterWorktreeOptions,
 ): UnregisterResult {
   const runRemove = (force: boolean) => {
-    git(
-      "-C",
-      mainPath,
-      "worktree",
-      "remove",
-      ...(force ? ["--force"] : []),
-      worktreePath,
-    );
+    git("-C", mainPath, "worktree", "remove", ...(force ? ["--force"] : []), worktreePath);
   };
 
   try {
@@ -41,8 +34,7 @@ export function unregisterWorktree(
         runRemove(true);
         return { ok: true };
       } catch (forceError) {
-        message =
-          forceError instanceof Error ? forceError.message : String(forceError);
+        message = forceError instanceof Error ? forceError.message : String(forceError);
       }
     }
 
@@ -63,8 +55,7 @@ export function unregisterWorktree(
         git("-C", mainPath, "worktree", "prune");
         return { ok: true };
       } catch (pruneError) {
-        const pruneMessage =
-          pruneError instanceof Error ? pruneError.message : String(pruneError);
+        const pruneMessage = pruneError instanceof Error ? pruneError.message : String(pruneError);
         return { ok: false, reason: pruneMessage };
       }
     }

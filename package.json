@@ -2,34 +2,29 @@
   "name": "worktree-remove",
   "version": "1.0.0",
   "description": "Safely remove Git worktrees and their directories, handling uncommitted changes and orphaned folders.",
-  "author": "Łukasz Jerciński",
-  "license": "MIT",
-  "scripts": {
-    "prepack": "pnpm run rebuild",
-    "prepare": "git config core.hooksPath .githooks",
-    "build": "tsc -p tsconfig.app.json",
-    "clean": "rm -rf dist *.tsbuildinfo",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "fta": "fta-check --threshold 55",
-    "knip": "knip",
-    "lint": "eslint",
-    "rebuild": "pnpm run clean && pnpm run build",
-    "start": "pnpm run rebuild && node bin/worktree-remove",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest",
-    "typecheck": "tsc -b --noEmit"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Jercik/worktree-remove.git"
-  },
+  "keywords": [
+    "branch",
+    "cleanup",
+    "cli",
+    "delete",
+    "git",
+    "git-worktree",
+    "remove",
+    "safe-delete",
+    "trash",
+    "workflow",
+    "worktree"
+  ],
   "homepage": "https://github.com/Jercik/worktree-remove#readme",
   "bugs": {
     "url": "https://github.com/Jercik/worktree-remove/issues"
   },
-  "type": "module",
+  "license": "MIT",
+  "author": "Łukasz Jerciński",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jercik/worktree-remove.git"
+  },
   "bin": {
     "worktree-remove": "bin/worktree-remove"
   },
@@ -39,22 +34,23 @@
     "README.md",
     "LICENSE"
   ],
-  "keywords": [
-    "git",
-    "worktree",
-    "git-worktree",
-    "remove",
-    "delete",
-    "safe-delete",
-    "cli",
-    "cleanup",
-    "trash",
-    "workflow",
-    "branch"
-  ],
-  "packageManager": "pnpm@10.33.0",
-  "engines": {
-    "node": ">=22.19.0"
+  "type": "module",
+  "scripts": {
+    "prepack": "pnpm run rebuild",
+    "prepare": "git config core.hooksPath .githooks",
+    "build": "tsgo -p tsconfig.app.json",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "fta": "fta-check --threshold 55",
+    "knip": "knip",
+    "lint": "oxlint --deny-warnings --report-unused-disable-directives .",
+    "rebuild": "pnpm run clean && pnpm run build",
+    "start": "pnpm run rebuild && node bin/worktree-remove",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "tsgo -b --noEmit"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^14.0.0",
@@ -67,15 +63,20 @@
   "devDependencies": {
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^25.6.0",
-    "@vitest/coverage-v8": "^4.1.4",
-    "eslint": "^10.2.1",
-    "eslint-config-axkit": "^1.7.0",
+    "@typescript/native-preview": "beta",
+    "@vitest/coverage-v8": "^4.1.5",
     "fta-check": "^1.5.2",
     "fta-cli": "^3.0.0",
-    "knip": "^6.5.0",
-    "prettier": "3.8.3",
+    "knip": "^6.6.3",
+    "oxfmt": "^0.46.0",
+    "oxlint": "^1.61.0",
+    "oxlint-config-j4k": "^2.3.0",
+    "oxlint-tsgolint": "^0.22.0",
     "semantic-release": "^25.0.3",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.4"
-  }
+    "vitest": "^4.1.5"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@10.33.0"
 }

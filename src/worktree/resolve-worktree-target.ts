@@ -4,20 +4,20 @@ import { normalizeBranchName } from "../git/git-helpers.js";
 import { normalizeGitPath } from "../git/normalize-git-path.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 
-type WorktreeEntry = {
+interface WorktreeEntry {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
-};
+}
 
-type ResolveWorktreeTargetInput = {
+interface ResolveWorktreeTargetInput {
   input: string;
   cwd: string;
   mainPath: string;
   worktrees: WorktreeEntry[];
   platform: NodeJS.Platform;
-};
+}
 
 type ResolvedWorktreeTarget =
   | { kind: "registered"; worktree: WorktreeEntry; isPathInput: boolean }
@@ -31,24 +31,29 @@ type ResolvedWorktreeTarget =
   | { kind: "ambiguous"; message: string };
 
 function looksLikePathInput(input: string): boolean {
-  if (input === "") return false;
+  if (input === "") {
+    return false;
+  }
   // Treat any leading "." as path input (e.g., "./wt", "../wt", ".git").
   // Git disallows branch names starting with ".", so this avoids ambiguity.
   // Hidden sibling directories can still be targeted via an explicit path like
   // "../.hidden-dir".
-  if (input.startsWith(".")) return true;
-  if (input.startsWith("~/") || input.startsWith("~\\")) return true;
+  if (input.startsWith(".")) {
+    return true;
+  }
+  if (input.startsWith("~/") || input.startsWith("~\\")) {
+    return true;
+  }
   // path.isAbsolute uses the runtime platform's rules; path.win32.isAbsolute
   // adds Windows drive-letter detection (e.g. C:\) when running on POSIX.
   // Both recognize "/" as absolute, so this covers all platforms.
   return path.isAbsolute(input) || path.win32.isAbsolute(input);
 }
 
-function expandHomeDirectory(
-  input: string,
-  pathApi: typeof path.posix,
-): string {
-  if (!input.startsWith("~/") && !input.startsWith("~\\")) return input;
+function expandHomeDirectory(input: string, pathApi: typeof path.posix): string {
+  if (!input.startsWith("~/") && !input.startsWith("~\\")) {
+    return input;
+  }
   return pathApi.join(os.homedir(), input.slice(2));
 }
 
@@ -67,18 +72,13 @@ export function resolveWorktreeTarget(
   const worktreesByPath = new Map<string, WorktreeEntry>();
 
   for (const worktree of parameters.worktrees) {
-    worktreesByPath.set(
-      normalizePathKey(worktree.path, parameters.platform),
-      worktree,
-    );
+    worktreesByPath.set(normalizePathKey(worktree.path, parameters.platform), worktree);
     if (worktree.branch) {
       worktreesByBranch.set(worktree.branch, worktree);
     }
   }
 
-  const normalizedBranch = isPathInput
-    ? undefined
-    : normalizeBranchName(trimmedInput);
+  const normalizedBranch = isPathInput ? undefined : normalizeBranchName(trimmedInput);
 
   if (normalizedBranch && containsParentDirectorySegment(normalizedBranch)) {
     return {
@@ -90,10 +90,7 @@ export function resolveWorktreeTarget(
   const resolvedInputPath = pathApi.resolve(
     parameters.cwd,
     isPathInput
-      ? normalizeGitPath(
-          expandHomeDirectory(trimmedInput, pathApi),
-          parameters.platform,
-        )
+      ? normalizeGitPath(expandHomeDirectory(trimmedInput, pathApi), parameters.platform)
       : trimmedInput,
   );
 
@@ -105,12 +102,9 @@ export function resolveWorktreeTarget(
     : undefined;
 
   const hasPathSeparator =
-    trimmedInput.includes(path.posix.sep) ||
-    trimmedInput.includes(path.win32.sep);
+    trimmedInput.includes(path.posix.sep) || trimmedInput.includes(path.win32.sep);
   const siblingPath =
-    isPathInput || hasPathSeparator
-      ? undefined
-      : pathApi.join(parentDirectory, trimmedInput);
+    isPathInput || hasPathSeparator ? undefined : pathApi.join(parentDirectory, trimmedInput);
 
   if (normalizedBranch) {
     const byBranch = worktreesByBranch.get(normalizedBranch);
@@ -120,9 +114,7 @@ export function resolveWorktreeTarget(
   }
 
   const directMatch =
-    worktreesByPath.get(
-      normalizePathKey(resolvedInputPath, parameters.platform),
-    ) ??
+    worktreesByPath.get(normalizePathKey(resolvedInputPath, parameters.platform)) ??
     (expectedPath
       ? worktreesByPath.get(normalizePathKey(expectedPath, parameters.platform))
       : undefined) ??
@@ -135,9 +127,7 @@ export function resolveWorktreeTarget(
   }
 
   const isWin32 = parameters.platform === "win32";
-  const normalizedBasenameInput = isWin32
-    ? trimmedInput.toLowerCase()
-    : trimmedInput;
+  const normalizedBasenameInput = isWin32 ? trimmedInput.toLowerCase() : trimmedInput;
 
   const basenameMatches = parameters.worktrees.filter((worktree) => {
     const basename = pathApi.basename(worktree.path);

@@ -3,27 +3,27 @@ import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 
-type WorktreeEntry = {
+interface WorktreeEntry {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
-};
+}
 
-type ResolveRemovalTargetInput = {
+interface ResolveRemovalTargetInput {
   input: string;
   cwd: string;
   mainPath: string;
   worktrees: WorktreeEntry[];
   platform: NodeJS.Platform;
-};
+}
 
-type ResolveRemovalTargetResult = {
+interface ResolveRemovalTargetResult {
   targetPath: string;
   registeredPath: string | undefined;
   registeredWorktree: WorktreeEntry | undefined;
   isPathInputTarget: boolean;
-};
+}
 
 export async function resolveRemovalTarget(
   input: ResolveRemovalTargetInput,
@@ -50,7 +50,9 @@ export async function resolveRemovalTarget(
     let secondExistingPath: string | undefined;
 
     for (const candidatePath of resolvedTarget.candidatePaths) {
-      if (!(await directoryExists(candidatePath))) continue;
+      if (!(await directoryExists(candidatePath))) {
+        continue;
+      }
       if (!existingPath) {
         existingPath = candidatePath;
         continue;

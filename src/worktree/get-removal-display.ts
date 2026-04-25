@@ -1,30 +1,28 @@
 import path from "node:path";
 
-type WorktreeEntry = {
+interface WorktreeEntry {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
-};
+}
 
-type RemovalDisplayInput = {
+interface RemovalDisplayInput {
   cwd: string;
   targetPath: string;
   registeredPath: string | undefined;
   registeredWorktree: WorktreeEntry | undefined;
   isPathInputTarget: boolean;
-};
+}
 
-export type RemovalDisplayInfo = {
+export interface RemovalDisplayInfo {
   status: string;
   referenceInfo: string;
   displayPath: string;
   targetDirectoryName: string;
-};
+}
 
-export function getRemovalDisplayInfo(
-  input: RemovalDisplayInput,
-): RemovalDisplayInfo {
+export function getRemovalDisplayInfo(input: RemovalDisplayInput): RemovalDisplayInfo {
   let status: string;
   if (input.registeredPath) {
     status = "registered worktree";
@@ -35,7 +33,9 @@ export function getRemovalDisplayInfo(
   }
 
   const referenceInfo = (() => {
-    if (!input.registeredWorktree || !input.registeredPath) return "";
+    if (!input.registeredWorktree || !input.registeredPath) {
+      return "";
+    }
     if (input.registeredWorktree.branch) {
       return `branch ${input.registeredWorktree.branch}`;
     }

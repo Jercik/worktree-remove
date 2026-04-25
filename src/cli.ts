@@ -28,14 +28,14 @@ process.on("SIGINT", () => {
   process.exit(130);
 });
 
-type CliOptions = {
+interface CliOptions {
   interactive?: boolean;
   yes?: boolean;
   force?: boolean;
   dryRun?: boolean;
   verbose?: boolean;
   quiet?: boolean;
-};
+}
 
 const program = new Command()
   .name(packageJson.name)
@@ -48,10 +48,7 @@ const program = new Command()
   .option("-i, --interactive", "interactively select worktrees to remove")
   .option("--no-interactive", "disable all prompts and interactive selection")
   .option("-y, --yes", "assume yes for all confirmation prompts")
-  .option(
-    "-f, --force",
-    "skip safety prompts on failures and uncommitted changes",
-  )
+  .option("-f, --force", "skip safety prompts on failures and uncommitted changes")
   .option("--dry-run", "show what would be removed without making changes")
   .option("--verbose", "show detailed progress output")
   .option("--quiet", "suppress non-error output")
@@ -71,10 +68,7 @@ const program = new Command()
       const isCi = process.env.CI !== undefined;
       const interactiveSelection = options.interactive === true;
       const promptsDisabled =
-        options.interactive === false ||
-        isCi ||
-        !process.stdin.isTTY ||
-        !process.stderr.isTTY;
+        options.interactive === false || isCi || !process.stdin.isTTY || !process.stderr.isTTY;
       const allowPrompt = !promptsDisabled;
 
       if (interactiveSelection && !allowPrompt) {
@@ -93,15 +87,11 @@ const program = new Command()
       }
 
       if (targets.length === 0 && !interactiveSelection) {
-        output.error(
-          "Missing target worktree. Provide a target or use --interactive.",
-        );
+        output.error("Missing target worktree. Provide a target or use --interactive.");
         process.exit(1);
       }
 
-      const selectedTargets = interactiveSelection
-        ? await selectWorktrees(output)
-        : targets;
+      const selectedTargets = interactiveSelection ? await selectWorktrees(output) : targets;
 
       if (selectedTargets.length === 0) {
         process.exit(0);

@@ -4,7 +4,7 @@ import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
 
-type PerformWorktreeRemovalInput = {
+interface PerformWorktreeRemovalInput {
   status: string;
   targetDirectoryName: string;
   targetPath: string;
@@ -21,7 +21,7 @@ type PerformWorktreeRemovalInput = {
    *  true and `force` is false, a trash failure on a registered worktree is
    *  treated as a non-recoverable error ({@link PerformWorktreeRemovalResult status: "failed"}). */
   skipTrashFailurePrompt?: boolean;
-};
+}
 
 export type PerformWorktreeRemovalResult =
   | { status: "ok" }
@@ -94,9 +94,7 @@ export async function performWorktreeRemoval(
           );
         }
       } else {
-        output.error(
-          `Could not move directory to trash: ${trashResult.reason}. Remove manually.`,
-        );
+        output.error(`Could not move directory to trash: ${trashResult.reason}. Remove manually.`);
         return { status: "failed" };
       }
     }
@@ -114,9 +112,7 @@ export async function performWorktreeRemoval(
         output.info("Unregistered from Git.");
       } else {
         unregisterFailed = true;
-        output.error(
-          `Could not fully unregister from Git: ${unregisterResult.reason}.`,
-        );
+        output.error(`Could not fully unregister from Git: ${unregisterResult.reason}.`);
       }
 
       if (directoryExistsBefore && !movedToTrash) {

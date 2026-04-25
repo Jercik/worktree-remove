@@ -1,20 +1,20 @@
 import { normalizeBranchName } from "./git-helpers.js";
 
-type WorktreeEntry = {
+interface WorktreeEntry {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
-};
+}
 
-type ParsedWorktreeList = {
+interface ParsedWorktreeList {
   mainPath: string;
   worktrees: WorktreeEntry[];
-};
+}
 
-type ParseWorktreeListOptions = {
+interface ParseWorktreeListOptions {
   isNulSeparated?: boolean;
-};
+}
 
 export function parseWorktreeListPorcelain(
   output: string,
@@ -33,9 +33,7 @@ export function parseWorktreeListPorcelain(
       }
 
       const worktreePathRaw = line.slice("worktree ".length);
-      const worktreePath = isNulSeparated
-        ? worktreePathRaw
-        : worktreePathRaw.trim();
+      const worktreePath = isNulSeparated ? worktreePathRaw : worktreePathRaw.trim();
       current = {
         path: worktreePath,
         head: undefined,
@@ -45,7 +43,9 @@ export function parseWorktreeListPorcelain(
       continue;
     }
 
-    if (!current) continue;
+    if (!current) {
+      continue;
+    }
 
     if (line.startsWith("HEAD ")) {
       const headRaw = line.slice("HEAD ".length);

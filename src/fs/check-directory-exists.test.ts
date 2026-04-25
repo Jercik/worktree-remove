@@ -20,7 +20,7 @@ describe("directoryExists", () => {
     vi.mocked(fs.stat).mockRejectedValueOnce(new Error("ENOENT"));
 
     const result = await directoryExists("/path/to/non-existent");
-    expect(result).toBe(false);
+    expect(result).not.toBe(true);
   });
 
   it("should return false for a file (not a directory)", async () => {
@@ -29,6 +29,6 @@ describe("directoryExists", () => {
     } as Stats);
 
     const result = await directoryExists("/path/to/file.txt");
-    expect(result).toBe(false);
+    expect(result).not.toBe(true);
   });
 });

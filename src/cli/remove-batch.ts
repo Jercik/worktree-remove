@@ -10,26 +10,20 @@ import { prepareCwdSwitch } from "./handle-cwd-switch.js";
 import type { OutputWriter } from "./output-writer.js";
 import { prefixOutput } from "./output-writer.js";
 import { reportBatchResults } from "./report-batch-results.js";
-import {
-  resolveBatchTargets,
-  type ResolvedTarget,
-} from "./resolve-batch-targets.js";
+import { resolveBatchTargets, type ResolvedTarget } from "./resolve-batch-targets.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { performWorktreeRemoval } from "../worktree/perform-worktree-removal.js";
 
-type BatchOptions = {
+interface BatchOptions {
   dryRun: boolean;
   assumeYes: boolean;
   force: boolean;
   allowPrompt: boolean;
   output: OutputWriter;
-};
+}
 
-export async function removeBatch(
-  targets: string[],
-  options: BatchOptions,
-): Promise<void> {
+export async function removeBatch(targets: string[], options: BatchOptions): Promise<void> {
   const { dryRun, assumeYes, force, allowPrompt, output } = options;
   const { mainPath, worktrees } = getWorktreeInfo();
   const invocationCwd = process.cwd();
@@ -49,9 +43,7 @@ export async function removeBatch(
   // Phase 1b: Batch dirty-check prompt
   const dirtyTargets = resolved.filter((r) => r.hasDirtyChanges);
   if (dirtyTargets.length > 0) {
-    const dirtyNames = dirtyTargets
-      .map((r) => r.displayInfo.targetDirectoryName)
-      .join(", ");
+    const dirtyNames = dirtyTargets.map((r) => r.displayInfo.targetDirectoryName).join(", ");
 
     if (force || assumeYes || dryRun) {
       output.warn(
@@ -128,9 +120,7 @@ export async function removeBatch(
           assumeYes,
           force,
           allowPrompt,
-          output: isSingleTarget
-            ? output
-            : prefixOutput(output, r.displayInfo.targetDirectoryName),
+          output: isSingleTarget ? output : prefixOutput(output, r.displayInfo.targetDirectoryName),
           // Suppress the interactive trash-failure prompt for multi-target
           // batches to prevent concurrent readline races on stdin. The user
           // already confirmed removal in Phase 2; if trash fails without
@@ -158,8 +148,7 @@ export async function removeBatch(
     // "cancelled" — user declined a prompt; exit cleanly (code 0)
   } else {
     const entries = results.map((result, index) => ({
-      name:
-        resolved[index]?.displayInfo.targetDirectoryName ?? "unknown target",
+      name: resolved[index]?.displayInfo.targetDirectoryName ?? "unknown target",
       result,
     }));
     reportBatchResults(entries, { dryRun, output });
@@ -167,17 +156,14 @@ export async function removeBatch(
 }
 
 function formatSingleConfirmation(target: ResolvedTarget): string {
-  const { status, displayPath, targetDirectoryName, referenceInfo } =
-    target.displayInfo;
+  const { status, displayPath, targetDirectoryName, referenceInfo } = target.displayInfo;
   const referenceSuffix = referenceInfo ? `, ${referenceInfo}` : "";
   return `Remove ${status} '${targetDirectoryName}' (${displayPath}${referenceSuffix})?`;
 }
 
 function formatBatchConfirmation(targets: ResolvedTarget[]): string {
   const summaryLines = targets.map((r) => {
-    const referenceSuffix = r.displayInfo.referenceInfo
-      ? `, ${r.displayInfo.referenceInfo}`
-      : "";
+    const referenceSuffix = r.displayInfo.referenceInfo ? `, ${r.displayInfo.referenceInfo}` : "";
     return `  ${r.displayInfo.status} '${r.displayInfo.targetDirectoryName}' (${r.displayInfo.displayPath}${referenceSuffix})`;
   });
   return `Remove ${targets.length} worktrees?\n${summaryLines.join("\n")}`;

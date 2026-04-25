@@ -31,20 +31,14 @@ export function ensureGitAvailable(): void {
  * @param args Git command arguments. If the last argument is an object with a `cwd` property,
  *             it will be used as the working directory for the command.
  */
-export function git(
-  ...arguments_: [...string[], { cwd?: string }] | string[]
-): string {
+export function git(...arguments_: [...string[], { cwd?: string }] | string[]): string {
   const gitExecutable = getGitExecutable();
   let cwd: string | undefined;
   let gitArguments: string[];
 
   // Check if the last argument is an options object
   const lastArgument = arguments_.at(-1);
-  if (
-    lastArgument &&
-    typeof lastArgument === "object" &&
-    "cwd" in lastArgument
-  ) {
+  if (lastArgument && typeof lastArgument === "object" && "cwd" in lastArgument) {
     cwd = lastArgument.cwd;
     gitArguments = arguments_.slice(0, -1) as string[];
   } else {
@@ -65,9 +59,7 @@ export function git(
     throw result.error;
   }
   if (result.status !== 0) {
-    throw new Error(
-      result.stderr || `git ${gitArguments[0] ?? "command"} failed`,
-    );
+    throw new Error(result.stderr || `git ${gitArguments[0] ?? "command"} failed`);
   }
   return result.stdout.trim();
 }

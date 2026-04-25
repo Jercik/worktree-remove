@@ -21,11 +21,7 @@ export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
   );
 
   if (sortedWorktrees.length === 0) {
-    output.warn(
-      chalk.yellow(
-        "No removable worktrees found. The main worktree is not selectable.",
-      ),
-    );
+    output.warn(chalk.yellow("No removable worktrees found. The main worktree is not selectable."));
     return [];
   }
 
@@ -60,16 +56,12 @@ export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
       const head = worktree.head?.slice(0, 7);
       const label =
         worktree.branch ??
-        (worktree.isDetached
-          ? `(detached${head ? ` @ ${head}` : ""})`
-          : `(no branch)`);
+        (worktree.isDetached ? `(detached${head ? ` @ ${head}` : ""})` : `(no branch)`);
 
       const isCurrentWorktree = currentLinkedWorktreePath === worktree.path;
 
       return {
-        name: `${label} (${relativePath})${
-          isCurrentWorktree ? " [current]" : ""
-        }`,
+        name: `${label} (${relativePath})${isCurrentWorktree ? " [current]" : ""}`,
         value: worktree.path,
       };
     }),

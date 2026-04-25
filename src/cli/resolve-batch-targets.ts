@@ -9,20 +9,17 @@ import { directoryExists } from "../fs/check-directory-exists.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { assertRemovalSafe } from "../worktree/assert-removal-safe.js";
-import {
-  getRemovalDisplayInfo,
-  type RemovalDisplayInfo,
-} from "../worktree/get-removal-display.js";
+import { getRemovalDisplayInfo, type RemovalDisplayInfo } from "../worktree/get-removal-display.js";
 import { resolveRemovalTarget } from "../worktree/resolve-removal-target.js";
 
-type WorktreeEntry = {
+interface WorktreeEntry {
   path: string;
   head: string | undefined;
   branch: string | undefined;
   isDetached: boolean;
-};
+}
 
-export type ResolvedTarget = {
+export interface ResolvedTarget {
   input: string;
   targetPath: string;
   registeredPath: string | undefined;
@@ -31,18 +28,16 @@ export type ResolvedTarget = {
   directoryExists: boolean;
   hasDirtyChanges: boolean;
   displayInfo: RemovalDisplayInfo;
-};
+}
 
-type ResolveBatchInput = {
+interface ResolveBatchInput {
   targets: string[];
   cwd: string;
   mainPath: string;
   worktrees: WorktreeEntry[];
-};
+}
 
-export async function resolveBatchTargets(
-  input: ResolveBatchInput,
-): Promise<ResolvedTarget[]> {
+export async function resolveBatchTargets(input: ResolveBatchInput): Promise<ResolvedTarget[]> {
   const resolved: ResolvedTarget[] = [];
   const seenPaths = new Set<string>();
 
@@ -52,7 +47,9 @@ export async function resolveBatchTargets(
   // worktrees have been modified yet.
   for (const target of input.targets) {
     const trimmedInput = target.trim();
-    if (!trimmedInput) continue;
+    if (!trimmedInput) {
+      continue;
+    }
 
     const resolvedTarget = await resolveRemovalTarget({
       input: trimmedInput,
@@ -63,7 +60,9 @@ export async function resolveBatchTargets(
     });
 
     const pathKey = normalizePathKey(resolvedTarget.targetPath);
-    if (seenPaths.has(pathKey)) continue;
+    if (seenPaths.has(pathKey)) {
+      continue;
+    }
     seenPaths.add(pathKey);
 
     assertRemovalSafe({

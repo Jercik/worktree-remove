@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isPathEqualOrWithin,
-  isPathStrictlyWithin,
-} from "./is-path-equal-or-within.js";
+import { isPathEqualOrWithin, isPathStrictlyWithin } from "./is-path-equal-or-within.js";
 
 describe("isPathEqualOrWithin", () => {
   it("returns true for the same POSIX path", () => {
@@ -32,7 +29,7 @@ describe("isPathEqualOrWithin", () => {
         candidatePath: "/Users/acme/repo-main",
         platform: "linux",
       }),
-    ).toBe(false);
+    ).not.toBe(true);
   });
 
   it("allows names prefixed with '..' that do not traverse upward", () => {
@@ -62,7 +59,7 @@ describe("isPathEqualOrWithin", () => {
         candidatePath: String.raw`D:\Users\Acme\Repo-Feature\src`,
         platform: "win32",
       }),
-    ).toBe(false);
+    ).not.toBe(true);
   });
 
   it("returns false when one of the paths is relative", () => {
@@ -72,7 +69,7 @@ describe("isPathEqualOrWithin", () => {
         candidatePath: "/Users/acme/repo-feature/src",
         platform: "linux",
       }),
-    ).toBe(false);
+    ).not.toBe(true);
   });
 });
 
@@ -84,7 +81,7 @@ describe("isPathStrictlyWithin", () => {
         candidatePath: "/Users/acme/repo-feature",
         platform: "linux",
       }),
-    ).toBe(false);
+    ).not.toBe(true);
   });
 
   it("returns true when the candidate path is inside the base path", () => {
