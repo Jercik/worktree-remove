@@ -19,6 +19,7 @@ import { createOutputWriter } from "./cli/output-writer.js";
 import { removeBatch } from "./cli/remove-batch.js";
 import { selectWorktrees } from "./cli/select-worktree.js";
 import { ensureGitAvailable } from "./git/git-helpers.js";
+import { createRemovalPolicy } from "./removal/removal-policy.js";
 
 const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
 chalk.level = shouldUseColor ? 3 : 0;
@@ -63,13 +64,19 @@ const program = new Command()
       const quiet = options.quiet ?? false;
       const output = createOutputWriter({ dryRun, verbose, quiet });
       const force = options.force === true;
-      const assumeYes = options.yes === true || dryRun;
+      const assumeYes = options.yes === true;
 
       const isCi = process.env.CI !== undefined;
       const interactiveSelection = options.interactive === true;
       const promptsDisabled =
         options.interactive === false || isCi || !process.stdin.isTTY || !process.stderr.isTTY;
       const allowPrompt = !promptsDisabled;
+      const policy = createRemovalPolicy({
+        dryRun,
+        assumeYes,
+        force,
+        allowPrompt,
+      });
 
       if (interactiveSelection && !allowPrompt) {
         output.error(
@@ -98,10 +105,7 @@ const program = new Command()
       }
 
       await removeBatch(selectedTargets, {
-        dryRun,
-        assumeYes,
-        force,
-        allowPrompt,
+        policy,
         output,
       });
     } catch (error: unknown) {
