@@ -13,8 +13,12 @@ on:
 
 jobs:
   dedupe-check:
+    # Private dev dependencies require NPM_TOKEN, which fork PRs cannot access.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -27,6 +31,10 @@ jobs:
         with:
           node-version-file: "package.json"
           cache: "pnpm"
+
+      - name: Configure npm.j4k.dev auth
+        if: ${{ env.NPM_TOKEN != '' }}
+        run: printf "registry=https://npm.j4k.dev/\n//npm.j4k.dev/:_authToken=%s\n" "${NPM_TOKEN}" > .npmrc
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
