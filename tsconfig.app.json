@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "lib": ["ES2025", "ESNext.Array", "ESNext.Error"],
     "types": ["node"],
+    "jsx": "react-jsx",
     "outDir": "./dist",
     "rootDir": "./src",
     "composite": true,
@@ -12,6 +13,6 @@
     "sourceMap": true,
     "rewriteRelativeImportExtensions": true
   },
-  "include": ["src/**/*.ts", "types/**/*.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "types/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.*", "**/*.spec.*"]
 }
