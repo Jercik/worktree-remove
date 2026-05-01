@@ -13,18 +13,16 @@ import { reportBatchResults } from "./report-batch-results.js";
 import { resolveBatchTargets, type ResolvedTarget } from "./resolve-batch-targets.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { exitWithMessage } from "../git/git-helpers.js";
+import type { RemovalPolicy } from "../removal/removal-policy.js";
 import { performWorktreeRemoval } from "../worktree/perform-worktree-removal.js";
 
 interface BatchOptions {
-  dryRun: boolean;
-  assumeYes: boolean;
-  force: boolean;
-  allowPrompt: boolean;
+  policy: RemovalPolicy;
   output: OutputWriter;
 }
 
 export async function removeBatch(targets: string[], options: BatchOptions): Promise<void> {
-  const { dryRun, assumeYes, force, allowPrompt, output } = options;
+  const { policy, output } = options;
   const { mainPath, worktrees } = getWorktreeInfo();
   const invocationCwd = process.cwd();
 
@@ -45,7 +43,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
   if (dirtyTargets.length > 0) {
     const dirtyNames = dirtyTargets.map((r) => r.displayInfo.targetDirectoryName).join(", ");
 
-    if (force || assumeYes || dryRun) {
+    if (policy.shouldWarnInsteadOfPrompt()) {
       output.warn(
         `${dirtyTargets.length} worktree${dirtyTargets.length > 1 ? "s have" : " has"} uncommitted changes: ${dirtyNames}`,
       );
@@ -53,9 +51,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
       const proceed = await confirmAction(
         `${dirtyTargets.length} worktree${dirtyTargets.length > 1 ? "s have" : " has"} uncommitted changes (${dirtyNames}). Remove anyway?`,
         {
-          allowPrompt,
-          assumeYes,
-          dryRun,
+          policy,
           promptDisabledMessage:
             "Worktrees have uncommitted changes. Re-run with --yes, --force, or --dry-run to proceed in non-interactive mode.",
         },
@@ -85,14 +81,12 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
     })),
     invocationCwd,
     mainPath,
-    dryRun,
+    dryRun: policy.dryRun,
     output,
   });
 
   const confirmed = await confirmAction(confirmationMessage, {
-    allowPrompt,
-    assumeYes,
-    dryRun,
+    policy,
     promptDisabledMessage:
       "Confirmation required. Re-run with --yes or --dry-run to proceed in non-interactive mode.",
   });
@@ -116,10 +110,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
           mainPath,
           registeredPath: r.registeredPath,
           directoryExistedInitially: r.directoryExists,
-          dryRun,
-          assumeYes,
-          force,
-          allowPrompt,
+          policy,
           output: isSingleTarget ? output : prefixOutput(output, r.displayInfo.targetDirectoryName),
           // Suppress the interactive trash-failure prompt for multi-target
           // batches to prevent concurrent readline races on stdin. The user
@@ -151,7 +142,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
       name: resolved[index]?.displayInfo.targetDirectoryName ?? "unknown target",
       result,
     }));
-    reportBatchResults(entries, { dryRun, output });
+    reportBatchResults(entries, { dryRun: policy.dryRun, output });
   }
 }
 

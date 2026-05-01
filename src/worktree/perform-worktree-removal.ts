@@ -3,6 +3,7 @@ import type { OutputWriter } from "../cli/output-writer.js";
 import { unregisterWorktree } from "../git/unregister-worktree.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { trashDirectory } from "../fs/trash-directory.js";
+import type { RemovalPolicy } from "../removal/removal-policy.js";
 
 interface PerformWorktreeRemovalInput {
   status: string;
@@ -11,10 +12,7 @@ interface PerformWorktreeRemovalInput {
   mainPath: string;
   registeredPath: string | undefined;
   directoryExistedInitially: boolean;
-  dryRun: boolean;
-  assumeYes: boolean;
-  force: boolean;
-  allowPrompt: boolean;
+  policy: RemovalPolicy;
   output: OutputWriter;
   /** Suppress the interactive trash-failure prompt without enabling destructive
    *  fallback. Used by batch mode to prevent concurrent readline races. When
@@ -38,10 +36,7 @@ export async function performWorktreeRemoval(
     mainPath,
     registeredPath,
     directoryExistedInitially,
-    dryRun,
-    assumeYes,
-    force,
-    allowPrompt,
+    policy,
     output,
     skipTrashFailurePrompt = false,
   } = parameters;
@@ -50,11 +45,11 @@ export async function performWorktreeRemoval(
 
   const directoryExistsBefore = await directoryExists(targetPath);
   let movedToTrash = false;
-  let forceUnregister = force;
+  let forceUnregister = policy.force;
   let unregisterFailed = false;
 
   if (directoryExistsBefore) {
-    if (dryRun) {
+    if (policy.dryRun) {
       output.info(`Would move '${targetPath}' to trash.`);
     } else {
       output.info("Moving directory to trash...");
@@ -63,20 +58,18 @@ export async function performWorktreeRemoval(
         movedToTrash = true;
         output.info("Directory moved to trash.");
       } else if (registeredPath) {
-        if (skipTrashFailurePrompt && !force) {
+        if (skipTrashFailurePrompt && !policy.force) {
           output.error(
             `Could not move directory '${targetDirectoryName}' to trash: ${trashResult.reason}. Re-run with --force to allow Git to permanently delete it.`,
           );
           return { status: "failed" };
         }
-        const proceed = force
+        const proceed = policy.force
           ? true
           : await confirmAction(
               `Could not move directory '${targetDirectoryName}' to trash: ${trashResult.reason}. Proceed with unregistering anyway? (Git may permanently delete it)`,
               {
-                allowPrompt,
-                assumeYes,
-                dryRun,
+                policy,
                 promptDisabledMessage:
                   "Trash move failed. Re-run with --yes or --force to proceed in non-interactive mode.",
               },
@@ -88,7 +81,7 @@ export async function performWorktreeRemoval(
         // User confirmed git may permanently delete the directory, so force
         // the unregister to handle dirty worktrees.
         forceUnregister = true;
-        if (force || assumeYes) {
+        if (policy.shouldWarnInsteadOfPrompt()) {
           output.warn(
             `Could not move directory to trash: ${trashResult.reason}. Git may permanently delete it.`,
           );
@@ -101,7 +94,7 @@ export async function performWorktreeRemoval(
   }
 
   if (registeredPath) {
-    if (dryRun) {
+    if (policy.dryRun) {
       output.info(`Would unregister '${registeredPath}' from Git.`);
     } else {
       output.info("Unregistering from Git...");

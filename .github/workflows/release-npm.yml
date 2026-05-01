@@ -45,6 +45,16 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: "pnpm"
 
+      - name: Configure npm.j4k.dev auth
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NPM_TOKEN}" ]; then
+            echo "NPM_TOKEN is required to install private dependencies." >&2
+            exit 1
+          fi
+          printf "registry=https://npm.j4k.dev/\n//npm.j4k.dev/:_authToken=%s\n" "${NPM_TOKEN}" > .npmrc
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

@@ -1,9 +1,8 @@
 import { confirm, exitWithMessage } from "../git/git-helpers.js";
+import type { RemovalPolicy } from "../removal/removal-policy.js";
 
 interface ConfirmActionOptions {
-  assumeYes: boolean;
-  allowPrompt: boolean;
-  dryRun: boolean;
+  policy: RemovalPolicy;
   promptDisabledMessage: string;
 }
 
@@ -11,10 +10,10 @@ export async function confirmAction(
   message: string,
   options: ConfirmActionOptions,
 ): Promise<boolean> {
-  if (options.assumeYes || options.dryRun) {
+  if (options.policy.shouldAutoConfirm()) {
     return true;
   }
-  if (!options.allowPrompt) {
+  if (!options.policy.allowPrompt) {
     exitWithMessage(options.promptDisabledMessage);
   }
   return confirm(message);
