@@ -19,7 +19,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "registered",
       worktree: {
         path: "/Users/acme/repo-feature/foo",
@@ -47,7 +47,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "registered",
       worktree: {
         path: "/Users/acme/repo-test-29",
@@ -75,7 +75,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "registered",
       worktree: {
         path: "/Users/acme/repo-test-29",
@@ -103,7 +103,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "registered",
       worktree: {
         path: "/Users/acme/repo-test-29",
@@ -137,7 +137,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "ambiguous",
       message:
         "Multiple worktrees match 'repo-test-29'. Re-run with --interactive or pass a full path.",
@@ -160,7 +160,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "win32",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "registered",
       worktree: {
         path: String.raw`D:\tmp\Repo-Test-29`,
@@ -181,7 +181,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "candidates",
       candidatePaths: ["/Users/acme/repo-feature/bar"],
       resolvedInputPath: "/Users/acme/repo/feature/bar",
@@ -199,7 +199,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "ambiguous",
       message:
         "Input 'feature/../oops' contains '..' path segments. Pass a full path or use --interactive.",
@@ -215,7 +215,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "candidates",
       candidatePaths: ["/Users/acme/repo-orphan", "/Users/acme/orphan"],
       resolvedInputPath: "/Users/acme/repo/orphan",
@@ -233,7 +233,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "candidates",
       candidatePaths: ["/Users/acme/orphan"],
       resolvedInputPath: "/Users/acme/orphan",
@@ -258,7 +258,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "registered",
       worktree: {
         path: "/Users/acme/repo-feature/foo",
@@ -281,7 +281,7 @@ describe("resolveWorktreeTarget", () => {
       platform: "linux",
     });
 
-    expect(result).toEqual({
+    expect(result).toStrictEqual({
       kind: "candidates",
       candidatePaths: ["/Users/acme/repo-test-29"],
       resolvedInputPath: "/Users/acme/repo-test-29",
