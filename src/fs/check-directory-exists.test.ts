@@ -22,10 +22,10 @@ describe("directoryExists", () => {
   });
 
   it("returns false for a file", async () => {
-    await expect(directoryExists(path.join(tempDir, "file.txt"))).resolves.not.toBe(true);
+    await expect(directoryExists(path.join(tempDir, "file.txt"))).resolves.toBe(false);
   });
 
   it("returns false for a non-existent path", async () => {
-    await expect(directoryExists(path.join(tempDir, "does-not-exist"))).resolves.not.toBe(true);
+    await expect(directoryExists(path.join(tempDir, "does-not-exist"))).resolves.toBe(false);
   });
 });
