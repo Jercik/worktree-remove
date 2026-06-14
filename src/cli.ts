@@ -1,16 +1,4 @@
 #!/usr/bin/env -S node --experimental-strip-types
-/**
- * worktree-remove.ts
- *
- * Remove one or more Git worktrees and/or their directories for given targets.
- * Handles registered worktrees, detached HEAD worktrees, and orphaned directories.
- *
- * This script:
- * 1. Resolves the targets (branch/path/directory name)
- * 2. Checks if they're registered as Git worktrees
- * 3. Unregisters them if needed
- * 4. Offers to delete the directories if they exist
- */
 
 import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
@@ -29,15 +17,6 @@ process.on("SIGINT", () => {
   process.exit(130);
 });
 
-interface CliOptions {
-  interactive?: boolean;
-  yes?: boolean;
-  force?: boolean;
-  dryRun?: boolean;
-  verbose?: boolean;
-  quiet?: boolean;
-}
-
 const program = new Command()
   .name(packageJson.name)
   .description(packageJson.description)
@@ -55,7 +34,7 @@ const program = new Command()
   .option("--quiet", "suppress non-error output")
   .showHelpAfterError("(add --help for additional information)")
   .showSuggestionAfterError()
-  .action(async (targets: string[], options: CliOptions) => {
+  .action(async (targets, options) => {
     try {
       ensureGitAvailable();
 
