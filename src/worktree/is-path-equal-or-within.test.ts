@@ -51,4 +51,14 @@ describe("isPathEqualOrWithin", () => {
       }),
     ).not.toBe(true);
   });
+
+  it("returns false when one of the paths is relative", () => {
+    expect(
+      isPathEqualOrWithin({
+        basePath: "repo-feature",
+        candidatePath: "repo-feature",
+        platform: "linux",
+      }),
+    ).not.toBe(true);
+  });
 });
