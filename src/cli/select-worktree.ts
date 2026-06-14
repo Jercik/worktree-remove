@@ -10,9 +10,6 @@ import type { OutputWriter } from "./output-writer.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { isPathStrictlyWithin } from "../worktree/is-path-strictly-within.js";
 
-const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
-chalk.level = shouldUseColor ? 3 : 0;
-
 export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
   const { mainPath, worktrees } = getWorktreeInfo();
   const cwd = process.cwd();

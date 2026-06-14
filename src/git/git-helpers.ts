@@ -2,9 +2,6 @@ import { spawnSync } from "node:child_process";
 import * as readline from "node:readline/promises";
 import chalk from "chalk";
 
-const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
-chalk.level = shouldUseColor ? 3 : 0;
-
 function getGitExecutable(): string {
   const configuredPath = process.env.WORKTREE_REMOVE_GIT_PATH?.trim();
   return configuredPath && configuredPath.length > 0 ? configuredPath : "git";
