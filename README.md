@@ -72,15 +72,7 @@ For safety, unregistered directories inside the main worktree are refused.
 worktree-remove <target...>
 ```
 
-Example:
-
-```bash
-# remove a single worktree
-worktree-remove feature/login-form
-
-# remove multiple worktrees at once
-worktree-remove feature/login-form feature/signup
-```
+The targeting modes above map onto concrete invocations; see [Examples](#examples) for the full command list.
 
 Detached HEAD example:
 
@@ -92,13 +84,6 @@ Sibling directory name example:
 
 ```bash
 worktree-remove my-app-test-29
-```
-
-Current worktree example:
-
-```bash
-# remove the worktree you are currently in (no need to know its name)
-worktree-remove . --yes
 ```
 
 ## Options
