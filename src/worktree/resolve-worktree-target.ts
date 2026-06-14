@@ -3,13 +3,7 @@ import path from "node:path";
 import { normalizeBranchName } from "../git/git-helpers.js";
 import { normalizeGitPath } from "../git/normalize-git-path.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
-
-interface WorktreeEntry {
-  path: string;
-  head: string | undefined;
-  branch: string | undefined;
-  isDetached: boolean;
-}
+import type { WorktreeEntry } from "../git/worktree-entry.js";
 
 interface ResolveWorktreeTargetInput {
   input: string;

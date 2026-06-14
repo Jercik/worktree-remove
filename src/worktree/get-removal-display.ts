@@ -1,11 +1,5 @@
 import path from "node:path";
-
-interface WorktreeEntry {
-  path: string;
-  head: string | undefined;
-  branch: string | undefined;
-  isDetached: boolean;
-}
+import type { WorktreeEntry } from "../git/worktree-entry.js";
 
 interface RemovalDisplayInput {
   cwd: string;
