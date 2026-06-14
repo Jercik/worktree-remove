@@ -1,34 +1,31 @@
-import { describe, it, expect, vi } from "vitest";
-import type { Stats } from "node:fs";
-import * as fs from "node:fs/promises";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { directoryExists } from "./check-directory-exists.js";
 
-vi.mock("node:fs/promises");
-
 describe("directoryExists", () => {
-  it("should return true for an existing directory", async () => {
-    vi.mocked(fs.stat).mockResolvedValueOnce({
-      isDirectory: () => true,
-    } as Stats);
+  let tempDir: string;
 
-    const result = await directoryExists("/path/to/existing/dir");
-    expect(result).toBe(true);
-    expect(fs.stat).toHaveBeenCalledWith("/path/to/existing/dir");
+  beforeAll(async () => {
+    tempDir = await mkdtemp(path.join(tmpdir(), "worktree-remove-dir-exists-"));
+    await mkdir(path.join(tempDir, "subdir"));
+    await writeFile(path.join(tempDir, "file.txt"), "content");
   });
 
-  it("should return false for a non-existent path", async () => {
-    vi.mocked(fs.stat).mockRejectedValueOnce(new Error("ENOENT"));
-
-    const result = await directoryExists("/path/to/non-existent");
-    expect(result).not.toBe(true);
+  afterAll(async () => {
+    await rm(tempDir, { recursive: true, force: true });
   });
 
-  it("should return false for a file (not a directory)", async () => {
-    vi.mocked(fs.stat).mockResolvedValueOnce({
-      isDirectory: () => false,
-    } as Stats);
+  it("returns true for an existing directory", async () => {
+    await expect(directoryExists(path.join(tempDir, "subdir"))).resolves.toBe(true);
+  });
 
-    const result = await directoryExists("/path/to/file.txt");
-    expect(result).not.toBe(true);
+  it("returns false for a file", async () => {
+    await expect(directoryExists(path.join(tempDir, "file.txt"))).resolves.not.toBe(true);
+  });
+
+  it("returns false for a non-existent path", async () => {
+    await expect(directoryExists(path.join(tempDir, "does-not-exist"))).resolves.not.toBe(true);
   });
 });
