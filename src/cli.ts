@@ -1,5 +1,3 @@
-#!/usr/bin/env -S node --experimental-strip-types
-
 import { Command } from "@commander-js/extra-typings";
 import chalk from "chalk";
 import packageJson from "../package.json" with { type: "json" };
@@ -61,7 +59,8 @@ const program = new Command()
         output.error(
           "Interactive selection is disabled in non-interactive mode. Provide a target or re-run without CI/--no-interactive.",
         );
-        process.exit(1);
+        process.exitCode = 1;
+        return;
       }
 
       if (options.interactive && targets.length > 0) {
@@ -74,13 +73,14 @@ const program = new Command()
 
       if (targets.length === 0 && !interactiveSelection) {
         output.error("Missing target worktree. Provide a target or use --interactive.");
-        process.exit(1);
+        process.exitCode = 1;
+        return;
       }
 
       const selectedTargets = interactiveSelection ? await selectWorktrees(output) : targets;
 
       if (selectedTargets.length === 0) {
-        process.exit(0);
+        return;
       }
 
       await removeBatch(selectedTargets, {
@@ -90,7 +90,7 @@ const program = new Command()
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(chalk.red("Error:"), message);
-      process.exit(1);
+      process.exitCode = 1;
     }
   });
 
