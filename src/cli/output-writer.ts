@@ -8,9 +8,6 @@ export interface OutputWriter {
   info: (message: string) => void;
   warn: (message: string) => void;
   error: (message: string) => void;
-  isDryRun: boolean;
-  isVerbose: boolean;
-  isQuiet: boolean;
 }
 
 export function prefixOutput(output: OutputWriter, prefix: string): OutputWriter {
@@ -21,9 +18,6 @@ export function prefixOutput(output: OutputWriter, prefix: string): OutputWriter
     info: wrap(output.info),
     warn: wrap(output.warn),
     error: wrap(output.error),
-    isDryRun: output.isDryRun,
-    isVerbose: output.isVerbose,
-    isQuiet: output.isQuiet,
   };
 }
 
@@ -56,8 +50,5 @@ export function createOutputWriter(options: OutputWriterOptions): OutputWriter {
     info,
     warn,
     error: writeError,
-    isDryRun: options.dryRun,
-    isVerbose: options.verbose,
-    isQuiet: options.quiet,
   };
 }
