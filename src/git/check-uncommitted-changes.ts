@@ -1,7 +1,3 @@
-/**
- * Check if a worktree has uncommitted changes
- */
-
 import { git } from "./git-helpers.js";
 
 export function hasUncommittedChanges(worktreePath: string): boolean {
