@@ -2,7 +2,7 @@ import type { PerformWorktreeRemovalResult } from "../worktree/perform-worktree-
 import { exitWithMessage } from "../git/git-helpers.js";
 import type { OutputWriter } from "./output-writer.js";
 
-interface BatchResultEntry {
+export interface BatchResultEntry {
   name: string;
   result: PromiseSettledResult<PerformWorktreeRemovalResult>;
 }
@@ -12,12 +12,12 @@ export function reportBatchResults(
   options: { dryRun: boolean; output: OutputWriter },
 ): void {
   const { dryRun, output } = options;
-  const succeeded: string[] = [];
+  let succeededCount = 0;
   const failed: string[] = [];
 
   for (const { name, result } of entries) {
     if (result.status === "fulfilled" && result.value.status === "ok") {
-      succeeded.push(name);
+      succeededCount += 1;
     } else {
       failed.push(name);
       if (result.status === "rejected") {
@@ -31,7 +31,7 @@ export function reportBatchResults(
   }
 
   const verb = dryRun ? "Would remove" : "Removed";
-  output.warn(`${verb} ${succeeded.length} of ${entries.length} worktrees.`);
+  output.warn(`${verb} ${succeededCount} of ${entries.length} worktrees.`);
   if (failed.length > 0) {
     exitWithMessage(`Failed: ${failed.join(", ")}`);
   }
