@@ -8,6 +8,7 @@ interface PathContainmentInput {
 
 export function isPathStrictlyWithin(input: PathContainmentInput): boolean {
   const pathApi = input.platform === "win32" ? path.win32 : path.posix;
+  // Require absolute inputs: path.win32.resolve mishandles relative paths on POSIX hosts.
   if (!pathApi.isAbsolute(input.basePath)) {
     return false;
   }
