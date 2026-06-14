@@ -11,13 +11,7 @@ import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { assertRemovalSafe } from "../worktree/assert-removal-safe.js";
 import { getRemovalDisplayInfo, type RemovalDisplayInfo } from "../worktree/get-removal-display.js";
 import { resolveRemovalTarget } from "../worktree/resolve-removal-target.js";
-
-interface WorktreeEntry {
-  path: string;
-  head: string | undefined;
-  branch: string | undefined;
-  isDetached: boolean;
-}
+import type { WorktreeEntry } from "../git/worktree-entry.js";
 
 export interface ResolvedTarget {
   input: string;

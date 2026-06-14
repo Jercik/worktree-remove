@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { isPathEqualOrWithin } from "./is-path-equal-or-within.js";
+import { isPathStrictlyWithin } from "./is-path-strictly-within.js";
 
-describe("isPathEqualOrWithin", () => {
-  it("returns true for the same POSIX path", () => {
+describe("isPathStrictlyWithin", () => {
+  it("returns false for equal paths", () => {
     expect(
-      isPathEqualOrWithin({
+      isPathStrictlyWithin({
         basePath: "/Users/acme/repo-feature",
         candidatePath: "/Users/acme/repo-feature",
         platform: "linux",
       }),
-    ).toBe(true);
+    ).not.toBe(true);
   });
 
   it("returns true when the candidate path is inside the base path", () => {
     expect(
-      isPathEqualOrWithin({
+      isPathStrictlyWithin({
         basePath: "/Users/acme/repo-feature",
         candidatePath: "/Users/acme/repo-feature/src",
         platform: "linux",
@@ -24,7 +24,7 @@ describe("isPathEqualOrWithin", () => {
 
   it("returns false when the candidate path is outside the base path", () => {
     expect(
-      isPathEqualOrWithin({
+      isPathStrictlyWithin({
         basePath: "/Users/acme/repo-feature",
         candidatePath: "/Users/acme/repo-main",
         platform: "linux",
@@ -32,11 +32,21 @@ describe("isPathEqualOrWithin", () => {
     ).not.toBe(true);
   });
 
-  it("treats equal Windows paths case-insensitively", () => {
+  it("allows names prefixed with '..' that do not traverse upward", () => {
     expect(
-      isPathEqualOrWithin({
+      isPathStrictlyWithin({
+        basePath: "/Users/acme/repo-feature",
+        candidatePath: "/Users/acme/repo-feature/..not-parent/tmp",
+        platform: "linux",
+      }),
+    ).toBe(true);
+  });
+
+  it("treats Windows paths case-insensitively", () => {
+    expect(
+      isPathStrictlyWithin({
         basePath: String.raw`C:\Users\Acme\Repo-Feature`,
-        candidatePath: String.raw`c:\users\acme\repo-feature`,
+        candidatePath: String.raw`c:\users\acme\repo-feature\src`,
         platform: "win32",
       }),
     ).toBe(true);
@@ -44,7 +54,7 @@ describe("isPathEqualOrWithin", () => {
 
   it("returns false for Windows paths on another drive", () => {
     expect(
-      isPathEqualOrWithin({
+      isPathStrictlyWithin({
         basePath: String.raw`C:\Users\Acme\Repo-Feature`,
         candidatePath: String.raw`D:\Users\Acme\Repo-Feature\src`,
         platform: "win32",
@@ -54,9 +64,9 @@ describe("isPathEqualOrWithin", () => {
 
   it("returns false when one of the paths is relative", () => {
     expect(
-      isPathEqualOrWithin({
+      isPathStrictlyWithin({
         basePath: "repo-feature",
-        candidatePath: "repo-feature",
+        candidatePath: "/Users/acme/repo-feature/src",
         platform: "linux",
       }),
     ).not.toBe(true);

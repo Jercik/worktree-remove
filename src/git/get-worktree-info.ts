@@ -5,13 +5,7 @@
 import { git, exitWithMessage } from "./git-helpers.js";
 import { normalizeGitPath } from "./normalize-git-path.js";
 import { parseWorktreeListPorcelain } from "./parse-worktree-list.js";
-
-interface WorktreeEntry {
-  path: string;
-  head: string | undefined;
-  branch: string | undefined;
-  isDetached: boolean;
-}
+import type { WorktreeEntry } from "./worktree-entry.js";
 
 interface WorktreeInfo {
   mainPath: string;

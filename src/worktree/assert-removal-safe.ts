@@ -1,6 +1,6 @@
 import { exitWithMessage } from "../git/git-helpers.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
-import { isPathStrictlyWithin } from "./is-path-equal-or-within.js";
+import { isPathStrictlyWithin } from "./is-path-strictly-within.js";
 
 interface RemovalSafetyInput {
   targetPath: string;

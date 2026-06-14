@@ -2,13 +2,7 @@ import path from "node:path";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
-
-interface WorktreeEntry {
-  path: string;
-  head: string | undefined;
-  branch: string | undefined;
-  isDetached: boolean;
-}
+import type { WorktreeEntry } from "../git/worktree-entry.js";
 
 interface ResolveRemovalTargetInput {
   input: string;
