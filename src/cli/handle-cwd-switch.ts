@@ -6,7 +6,7 @@
 import type { OutputWriter } from "./output-writer.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { exitWithMessage } from "../git/git-helpers.js";
-import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
+import { isPathStrictlyWithin } from "../worktree/is-path-strictly-within.js";
 
 interface TargetEntry {
   path: string;
@@ -30,12 +30,14 @@ interface CwdSwitchInput {
 export function prepareCwdSwitch(input: CwdSwitchInput): (() => void) | undefined {
   const { targets, invocationCwd, mainPath, dryRun, output } = input;
 
-  const matchingTarget = targets.find((t) =>
-    isPathEqualOrWithin({
-      basePath: t.path,
-      candidatePath: invocationCwd,
-      platform: process.platform,
-    }),
+  const matchingTarget = targets.find(
+    (t) =>
+      normalizePathKey(t.path) === normalizePathKey(invocationCwd) ||
+      isPathStrictlyWithin({
+        basePath: t.path,
+        candidatePath: invocationCwd,
+        platform: process.platform,
+      }),
   );
 
   if (!matchingTarget || normalizePathKey(invocationCwd) === normalizePathKey(mainPath)) {

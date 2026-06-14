@@ -6,11 +6,8 @@ interface PathContainmentInput {
   platform: NodeJS.Platform;
 }
 
-function isPathWithin(input: PathContainmentInput, includeEqual: boolean): boolean {
+export function isPathStrictlyWithin(input: PathContainmentInput): boolean {
   const pathApi = input.platform === "win32" ? path.win32 : path.posix;
-  // This helper is designed for already-resolved absolute paths.
-  // Forcing absolute inputs avoids host/target path-API mismatches such as
-  // `path.win32.resolve` behavior on POSIX hosts for relative values.
   if (!pathApi.isAbsolute(input.basePath)) {
     return false;
   }
@@ -24,7 +21,7 @@ function isPathWithin(input: PathContainmentInput, includeEqual: boolean): boole
   );
 
   if (relative === "") {
-    return includeEqual;
+    return false;
   }
   if (pathApi.isAbsolute(relative)) {
     return false;
@@ -33,12 +30,4 @@ function isPathWithin(input: PathContainmentInput, includeEqual: boolean): boole
     return false;
   }
   return true;
-}
-
-export function isPathEqualOrWithin(input: PathContainmentInput): boolean {
-  return isPathWithin(input, true);
-}
-
-export function isPathStrictlyWithin(input: PathContainmentInput): boolean {
-  return isPathWithin(input, false);
 }

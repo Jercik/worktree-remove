@@ -7,7 +7,8 @@ import { checkbox } from "@inquirer/prompts";
 import chalk from "chalk";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import type { OutputWriter } from "./output-writer.js";
-import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
+import { normalizePathKey } from "../fs/normalize-path-key.js";
+import { isPathStrictlyWithin } from "../worktree/is-path-strictly-within.js";
 
 const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
 chalk.level = shouldUseColor ? 3 : 0;
@@ -26,22 +27,25 @@ export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
   }
 
   const currentLinkedWorktreePath = sortedWorktrees
-    .filter((worktree) =>
-      isPathEqualOrWithin({
-        basePath: worktree.path,
-        candidatePath: cwd,
-        platform: process.platform,
-      }),
+    .filter(
+      (worktree) =>
+        normalizePathKey(worktree.path) === normalizePathKey(cwd) ||
+        isPathStrictlyWithin({
+          basePath: worktree.path,
+          candidatePath: cwd,
+          platform: process.platform,
+        }),
     )
     .toSorted((a, b) => b.path.length - a.path.length)[0]?.path;
 
   const isCurrentMain =
     currentLinkedWorktreePath === undefined &&
-    isPathEqualOrWithin({
-      basePath: mainPath,
-      candidatePath: cwd,
-      platform: process.platform,
-    });
+    (normalizePathKey(mainPath) === normalizePathKey(cwd) ||
+      isPathStrictlyWithin({
+        basePath: mainPath,
+        candidatePath: cwd,
+        platform: process.platform,
+      }));
 
   const choices = [
     {
