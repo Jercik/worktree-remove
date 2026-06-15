@@ -1,7 +1,3 @@
-/**
- * Get worktree information from git
- */
-
 import { git, exitWithMessage } from "./git-helpers.js";
 import { normalizeGitPath } from "./normalize-git-path.js";
 import { parseWorktreeListPorcelain } from "./parse-worktree-list.js";

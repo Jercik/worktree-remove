@@ -61,30 +61,6 @@ export function git(...arguments_: [...string[], { cwd?: string }] | string[]): 
   return result.stdout.trim();
 }
 
-/**
- * Normalize a Git branch reference to a simple branch name.
- *
- * This helper trims surrounding whitespace and removes common prefixes so the
- * resulting string matches the short local branch name used by refs under
- * `refs/heads/`.
- *
- * Behavior:
- * - Trims surrounding whitespace.
- * - Strips `refs/heads/`.
- * - Strips `refs/remotes/origin/`.
- * - Strips `remotes/origin/`.
- * - Strips `origin/`.
- *
- * It deliberately does not lowercase or modify path separators so branch names
- * like `feature/subtask` remain intact.
- *
- * Examples:
- * - normalizeBranchName("feature/login") → "feature/login"
- * - normalizeBranchName(" origin/feature/login ") → "feature/login"
- * - normalizeBranchName("refs/heads/feature/login") → "feature/login"
- * - normalizeBranchName("refs/remotes/origin/feature/login") → "feature/login"
- * - normalizeBranchName("remotes/origin/feature/login") → "feature/login"
- */
 export function normalizeBranchName(name: string): string {
   const trimmed = name.trim();
   return trimmed
@@ -94,20 +70,12 @@ export function normalizeBranchName(name: string): string {
     .replace(/^origin\//u, "");
 }
 
-/**
- * Print an error message and exit the process with status 1.
- */
 export function exitWithMessage(message: string): never {
   console.error(chalk.red(message));
   // eslint-disable-next-line unicorn/no-process-exit
   process.exit(1);
 }
 
-/**
- * Prompts user for yes/no confirmation
- * @param message The message to display to the user
- * @returns Promise<boolean> - true if user confirms, false otherwise
- */
 export async function confirm(message: string): Promise<boolean> {
   const rl = readline.createInterface({
     input: process.stdin,

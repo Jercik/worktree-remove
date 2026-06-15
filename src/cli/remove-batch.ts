@@ -10,6 +10,7 @@ import { prepareCwdSwitch } from "./handle-cwd-switch.js";
 import type { OutputWriter } from "./output-writer.js";
 import { prefixOutput } from "./output-writer.js";
 import { reportBatchResults } from "./report-batch-results.js";
+import type { BatchResultEntry } from "./report-batch-results.js";
 import { resolveBatchTargets, type ResolvedTarget } from "./resolve-batch-targets.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { exitWithMessage } from "../git/git-helpers.js";
@@ -34,7 +35,8 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
     worktrees,
   });
 
-  if (resolved.length === 0) {
+  const [firstTarget] = resolved;
+  if (!firstTarget) {
     exitWithMessage("No valid targets to remove.");
   }
 
@@ -65,14 +67,9 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
 
   // Phase 2: Confirmation
   const isSingleTarget = resolved.length === 1;
-  const firstTarget = resolved[0];
-
-  // For a single target, show the same compact prompt as the old single-target flow.
-  // For multiple targets, show a numbered list.
-  const confirmationMessage =
-    isSingleTarget && firstTarget
-      ? formatSingleConfirmation(firstTarget)
-      : formatBatchConfirmation(resolved);
+  const confirmationMessage = isSingleTarget
+    ? formatSingleConfirmation(firstTarget)
+    : formatBatchConfirmation(resolved);
 
   const performCwdSwitch = prepareCwdSwitch({
     targets: resolved.map((r) => ({
@@ -100,49 +97,47 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
 
   // Phase 3: Remove targets in parallel (concurrency 4)
   const limit = pLimit(4);
-  const results = await Promise.allSettled(
-    resolved.map((r) =>
-      limit(() =>
-        performWorktreeRemoval({
-          status: r.displayInfo.status,
-          targetDirectoryName: r.displayInfo.targetDirectoryName,
-          targetPath: r.targetPath,
-          mainPath,
-          registeredPath: r.registeredPath,
-          directoryExistedInitially: r.directoryExists,
-          policy,
-          output: isSingleTarget ? output : prefixOutput(output, r.displayInfo.targetDirectoryName),
-          // Suppress the interactive trash-failure prompt for multi-target
-          // batches to prevent concurrent readline races on stdin. The user
-          // already confirmed removal in Phase 2; if trash fails without
-          // --force, the target is reported as failed instead of silently
-          // proceeding with a destructive git unregister.
-          skipTrashFailurePrompt: !isSingleTarget,
-        }),
-      ),
+  const settled = await Promise.all(
+    resolved.map((target) =>
+      limit(async (): Promise<BatchResultEntry> => {
+        const name = target.displayInfo.targetDirectoryName;
+        try {
+          const value = await performWorktreeRemoval({
+            status: target.displayInfo.status,
+            targetDirectoryName: name,
+            targetPath: target.targetPath,
+            mainPath,
+            registeredPath: target.registeredPath,
+            directoryExistedInitially: target.directoryExists,
+            policy,
+            output: isSingleTarget ? output : prefixOutput(output, name),
+            // Suppress the interactive trash-failure prompt for multi-target
+            // batches to prevent concurrent readline races on stdin. The user
+            // already confirmed removal in Phase 2; if trash fails without
+            // --force, the target is reported as failed instead of silently
+            // proceeding with a destructive git unregister.
+            skipTrashFailurePrompt: !isSingleTarget,
+          });
+          return { name, result: { status: "fulfilled", value } };
+        } catch (error) {
+          return { name, result: { status: "rejected", reason: error } };
+        }
+      }),
     ),
   );
 
   // Phase 4: Report summary (skip for single targets — performWorktreeRemoval
   // already reports its own outcome, but still check exit code)
   if (isSingleTarget) {
-    const singleResult = results[0];
-    if (
-      !singleResult ||
-      singleResult.status === "rejected" ||
-      singleResult.value.status === "failed"
-    ) {
-      exitWithMessage(
-        `Failed to remove '${firstTarget?.displayInfo.targetDirectoryName ?? "target"}'.`,
-      );
+    const failed = settled.some(
+      (entry) => entry.result.status === "rejected" || entry.result.value.status === "failed",
+    );
+    if (failed) {
+      exitWithMessage(`Failed to remove '${firstTarget.displayInfo.targetDirectoryName}'.`);
     }
     // "cancelled" — user declined a prompt; exit cleanly (code 0)
   } else {
-    const entries = results.map((result, index) => ({
-      name: resolved[index]?.displayInfo.targetDirectoryName ?? "unknown target",
-      result,
-    }));
-    reportBatchResults(entries, { dryRun: policy.dryRun, output });
+    reportBatchResults(settled, { dryRun: policy.dryRun, output });
   }
 }
 

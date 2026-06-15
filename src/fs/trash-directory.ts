@@ -1,7 +1,3 @@
-/**
- * Move a directory to the system trash
- */
-
 import trash from "trash";
 
 type TrashResult = { ok: true } | { ok: false; reason: string };
