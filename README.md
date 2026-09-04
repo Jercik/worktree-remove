@@ -18,7 +18,7 @@ Running `worktree-remove`:
 
 ## Requirements
 
-- Node.js ≥ 24.0.0
+- Node.js ≥ 24.15.0
 - Git with `git worktree` support
 - Optional: set `WORKTREE_REMOVE_GIT_PATH` to override the git executable
 
