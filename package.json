@@ -42,7 +42,6 @@
     "build": "tsc -p tsconfig.build.json",
     "check:dts": "node scripts/check-dts.ts",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "commit-msg": "conventional-commit-msg",
     "format": "oxfmt --config .oxfmtrc.json .",
     "format:check": "oxfmt --check --config .oxfmtrc.json .",
     "fta": "fta-check --threshold 55",
@@ -55,7 +54,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "typecheck": "tsc -b tsconfig.json tsconfig.test.json tsconfig.scripts.json tsconfig.app.json tsconfig.build.json tsconfig.check.json --noEmit"
+    "typecheck": "tsc -b tsconfig.check.json tsconfig.test.json tsconfig.scripts.json tsconfig.app.json tsconfig.build.json --noEmit"
   },
   "dependencies": {
     "@commander-js/extra-typings": "^15.0.0",
@@ -71,7 +70,6 @@
     "@types/node": "^24.0.0",
     "@vitest/coverage-v8": "^4.1.8",
     "conventional-changelog-conventionalcommits": "^9.3.1",
-    "conventional-commit-msg": "catalog:",
     "fta-check": "^1.5.8",
     "fta-cli": "^3.0.0",
     "knip": "^6.16.1",

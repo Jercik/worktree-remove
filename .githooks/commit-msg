@@ -2,13 +2,7 @@
 # Native Git hook - enable with: git config core.hooksPath .githooks
 set -euo pipefail
 
-if [[ ! -e node_modules/.bin/conventional-commit-msg ]]; then
-  printf '%s\n' 'conventional-commit-msg is not installed; run `pnpm install` (it must be a devDependency).' >&2
-  exit 127
-fi
-
-# The bin directly: starting pnpm to run the commit-msg script costs more than the check itself, and pnpm 11+ reinstalls first when package.json has drifted from the lockfile. The root commit-msg script exists so knip sees the bin.
-node_modules/.bin/conventional-commit-msg "$1"
+bash scripts/check-msg.sh < "$1"
 
 ignored_staged_paths=(
   ":(exclude).claude/**"
@@ -74,7 +68,7 @@ run_step() {
     return 0
   fi
   cat "$script_log" >&2
-  exit 1
+  return 1
 }
 
 run_script() {
@@ -179,12 +173,17 @@ if [[ "$manifests_staged" == true ]]; then
   run_step "dedupe --check" pnpm dedupe --check --store-dir "$pnpm_store_dir" --config.confirm-modules-purge=false
 fi
 
-run_script "format:check"
-run_script "knip"
-run_script "typecheck"
+static_failed=0
+run_script "format:check" || static_failed=1
+run_script "knip" || static_failed=1
+run_script "typecheck" || static_failed=1
 if [[ "$dts_inputs_staged" == true ]]; then
-  run_script "check:dts"
+  run_script "check:dts" || static_failed=1
 fi
-run_script "lint"
-run_script "fta"
+run_script "lint" || static_failed=1
+run_script "fta" || static_failed=1
+if [[ "$static_failed" -ne 0 ]]; then
+  printf '%s\n' 'Static checks failed; tests were not started.' >&2
+  exit 1
+fi
 run_script "test"
