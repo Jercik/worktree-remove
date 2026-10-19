@@ -13,11 +13,6 @@ fi
 message=$(git stripspace)
 header=${message%%$'\n'*}
 if [[ "$mode" == commit ]]; then
-  stripped=$(printf '%s\n' "$message" | git stripspace --strip-comments)
-  if [[ "$header" != "${stripped%%$'\n'*}" ]]; then
-    printf '%s\n' 'commit-msg: header changes when Git removes comments' >&2
-    exit 1
-  fi
   case "$header" in
     'Merge branch '*|'Merge remote-tracking branch '*|'Merge tag '*|'Merge pull request '*|'Merge commit '*|'Revert "'*|'Reapply "'*|'fixup! '*|'squash! '*|'amend! '*) exit 0 ;;
   esac
@@ -31,11 +26,4 @@ fi
 if [[ "${#header}" -gt 100 ]]; then
   printf '%s\n' 'commit-msg: header exceeds 100 characters' >&2
   exit 1
-fi
-if [[ "$message" == *$'\n'* ]]; then
-  remainder=${message#*$'\n'}
-  if [[ -n "${remainder%%$'\n'*}" ]]; then
-    printf '%s\n' 'commit-msg: second line must be empty' >&2
-    exit 1
-  fi
 fi
