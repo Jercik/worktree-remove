@@ -105,6 +105,9 @@ jobs:
           git log --format=%s "$from..$HEAD_SHA" > "$pr_fields/subjects"
           failed=0
           while IFS= read -r subject; do
-            printf '%s\n' "$subject" | bash scripts/check-msg.sh || failed=1
+            if ! printf '%s\n' "$subject" | bash scripts/check-msg.sh; then
+              printf 'commit-msg: rejected subject: %s\n' "$subject" >&2
+              failed=1
+            fi
           done < "$pr_fields/subjects"
           exit "$failed"
