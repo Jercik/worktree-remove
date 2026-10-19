@@ -15,7 +15,7 @@ concurrency:
   group: ${{ github.repository }}-release-npm
   cancel-in-progress: true
 
-# pnpm 11 defaults verify-deps-before-run to "install": the first `pnpm
+# pnpm defaults verify-deps-before-run to "install": the first `pnpm
 # <script>` or `pnpm exec` whose deps-status check sees drift re-runs a full
 # install with lifecycle scripts enabled, silently dropping this workflow's
 # install flags — a prepare hook the hardened --ignore-scripts install skipped
@@ -33,6 +33,7 @@ jobs:
     name: Release npm
     if: >-
       github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
@@ -61,7 +62,7 @@ jobs:
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Restore pnpm store
-        # Explicit cache steps, not setup-node's `cache: pnpm`: the Forgejo runner's cache server lowercases keys and setup-node compares the matched key case-sensitively, so every hit re-uploaded the store. actions/cache compares them case-insensitively.
+        # Not setup-node's `cache: pnpm`: the Forgejo runner's cache server lowercases keys and setup-node compares the matched key case-sensitively, so an exact hit never counts as one there and the store is uploaded again. actions/cache compares them case-insensitively.
         id: pnpm-cache
         uses: actions/cache/restore@v6
         with:
@@ -100,7 +101,7 @@ jobs:
         run: pnpm exec semantic-release
 
       - name: Save pnpm store
-        # Last step, so it saves only after the whole job succeeded, as setup-node's post step did. The key comes from the restore step so install cannot change it.
+        # Last step, so it saves only after the whole job succeeded. The key comes from the restore step so install cannot change it.
         if: steps.pnpm-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v6
         with:
