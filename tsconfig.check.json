@@ -16,11 +16,7 @@
     "src/**/*.ts",
     "src/**/*.mts",
     "src/**/*.cts",
-    "src/**/*.tsx",
-    "scripts/**/*.ts",
-    "scripts/**/*.mts",
-    "scripts/**/*.cts",
-    "scripts/**/*.tsx"
+    "src/**/*.tsx"
   ],
   "exclude": ["node_modules", "dist", "**/*.test.*", "**/*.spec.*"]
 }
