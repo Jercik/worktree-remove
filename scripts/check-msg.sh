@@ -20,10 +20,10 @@ fi
 
 pattern='^(feat|fix|docs|refactor|test|chore|perf|build|ci|style|revert)(\([^)]+\))?!?: .+'
 if [[ ! "$header" =~ $pattern ]]; then
-  printf '%s\n' 'commit-msg: expected a Conventional Commits header' >&2
+  printf 'commit-msg: invalid header (expected a Conventional Commits header): %s\n' "$header" >&2
   exit 1
 fi
 if [[ "${#header}" -gt 100 ]]; then
-  printf '%s\n' 'commit-msg: header exceeds 100 characters' >&2
+  printf 'commit-msg: header has %s characters (maximum 100): %s\n' "${#header}" "$header" >&2
   exit 1
 fi
