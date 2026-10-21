@@ -9,13 +9,18 @@ on:
     # fires on title and body edits, so a title change rechecks the squash subject.
     types: [opened, synchronize, reopened, edited]
 
-permissions:
-  contents: read
-  # Reading the current pull request needs more than contents: read.
-  pull-requests: read
-
 jobs:
   commitlint:
+    # When a trusted user edits or reopens a fork or AGit PR whose poster lacks
+    # Actions trust, Forgejo runs this base copy without approval. The job checks
+    # out that PR's head and executes its checker, so the PR's code would run
+    # on a root runner. Fork and
+    # AGit PRs therefore skip this check, and a skip is not a pass.
+    # Forgejo treats an AGit PR as a fork: its poster's own events run the head
+    # copy, where this guard could be deleted, only after approval.
+    # head.repo.fork is unreliable; AGit reuses repo identity without push access.
+    # Keep toJSON: a bare flow == 0 also admits a missing, null, '' or '0' flow (all coerce to 0).
+    if: github.event.pull_request.head.repo.full_name == github.repository && toJSON(github.event.pull_request.flow) == '0'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

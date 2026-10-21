@@ -16,7 +16,7 @@ process.on("SIGINT", () => {
 });
 
 const program = new Command()
-  .name(packageJson.name)
+  .name("worktree-remove")
   .description(packageJson.description)
   .version(packageJson.version)
   .argument(

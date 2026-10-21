@@ -193,6 +193,9 @@ importers:
       '@j4k/oxlint-config':
         specifier: ^2.14.2
         version: 2.14.2(oxlint-tsgolint@7.0.2004)(oxlint@1.88.0(oxlint-tsgolint@7.0.2004))
+      '@j4k/semantic-release-forgejo':
+        specifier: ^1.2.4
+        version: 1.2.4(semantic-release@25.0.5(supports-color@7.2.0)(typescript@7.0.2))
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
         version: 0.6.1
@@ -593,6 +596,11 @@ packages:
     peerDependencies:
       oxlint: '>=1.86.0'
       oxlint-tsgolint: '>=7.0.2003'
+
+  '@j4k/semantic-release-forgejo@1.2.4':
+    resolution: {integrity: sha512-6cOjfCyTdbhdjrEmOcRPBzE0SKdOStXZLyTrokunMGbxSkmcTyNx+Ba/SdToDftZHZAZviYhp7YPBHUceZ+mnQ==, tarball: https://code.j4k.dev/api/packages/j4k/npm/%40j4k%2Fsemantic-release-forgejo/-/1.2.4/semantic-release-forgejo-1.2.4.tgz}
+    peerDependencies:
+      semantic-release: ^25.0.3
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -3402,6 +3410,10 @@ snapshots:
     dependencies:
       oxlint: 1.88.0(oxlint-tsgolint@7.0.2004)
       oxlint-tsgolint: 7.0.2004
+
+  '@j4k/semantic-release-forgejo@1.2.4(semantic-release@25.0.5(supports-color@7.2.0)(typescript@7.0.2))':
+    dependencies:
+      semantic-release: 25.0.5(supports-color@7.2.0)(typescript@7.0.2)
 
   '@jridgewell/resolve-uri@3.1.2': {}
 

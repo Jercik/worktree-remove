@@ -1,5 +1,7 @@
 # worktree-remove
 
+Source: https://code.j4k.dev/j4k-oss/worktree-remove. github.com/Jercik/worktree-remove is a read-only mirror; open issues and pull requests on the Forge.
+
 Safely remove one or more Git worktrees and their directories, handling uncommitted changes and orphaned folders.
 
 ## What it does
@@ -23,6 +25,26 @@ Running `worktree-remove`:
 - Optional: set `WORKTREE_REMOVE_GIT_PATH` to override the git executable
 
 ## Install / run
+
+Each release is published under two names with the same files:
+
+- `worktree-remove` on npmjs.org, for `npx` and `npm exec`. All examples below use it.
+- `@j4k-oss/worktree-remove` on the `code.j4k.dev` registry, for pnpm projects that exempt the `@j4k-oss` scope from `minimumReleaseAge`. The registry reads anonymously.
+
+To use the `code.j4k.dev` copy, map the scope to its registry and exempt it in `pnpm-workspace.yaml`, then add the package:
+
+```yaml
+registries:
+  "@j4k-oss": https://code.j4k.dev/api/packages/j4k-oss/npm/
+minimumReleaseAgeExclude:
+  - "@j4k-oss/*"
+```
+
+```bash
+pnpm add -D @j4k-oss/worktree-remove
+```
+
+Both packages install the same `worktree-remove` command.
 
 You usually don’t need a global install.
 

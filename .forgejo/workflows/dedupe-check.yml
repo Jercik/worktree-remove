@@ -11,8 +11,12 @@ on:
     paths:
       - pnpm-lock.yaml
 
-permissions:
-  contents: read
+# Workflow-level: Forgejo gates OIDC issuance on the enable-openid-connect key
+# (it ignores a GitHub-style `permissions:` block), applied to every job. It is
+# the version-robust placement — current act/jobparser honors a job-level flag
+# too (it resolves job-level precedence during expansion), but a workflow-level
+# flag has always minted the OIDC token, so no per-job setting is needed.
+enable-openid-connect: true
 
 # pnpm defaults verify-deps-before-run to "install": a `pnpm <script>` or
 # `pnpm exec` whose deps-status check sees drift re-runs a full install with
@@ -28,6 +32,14 @@ env:
 
 jobs:
   dedupe-check:
+    # Fork and AGit PRs skip this job, and a skip is not a pass. When a trusted
+    # user reopens one whose poster lacks Actions trust, Forgejo runs this base
+    # copy unapproved against the PR head. AGit flow 1 reuses this repo's identity;
+    # toJSON rejects a missing, null, '' or '0' flow that a bare == 0 would admit.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      toJSON(github.event.pull_request.flow) == '0')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -58,20 +70,40 @@ jobs:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: node-cache-${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Verify install secret
+      - name: Configure registry auth
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.FORGEJO_NPM_TOKEN }}
+          NPM_READ_AUDIENCE: ${{ vars.NPM_READ_AUDIENCE }}
         run: |
           set -eu
-          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
-            echo "::error::Missing required install secret FORGEJO_NPM_TOKEN; set it in the repo Actions secrets."
+          if [ -z "${NPM_READ_AUDIENCE:-}" ]; then
+            echo "::error::NPM_READ_AUDIENCE variable is not set. It is the server-generated audience for the org npm-reader integration; reconcile it from j4k-cluster."
             exit 1
           fi
-
-      - name: Configure registry auth
-        run: echo "//code.j4k.dev/api/packages/j4k/npm/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.FORGEJO_NPM_TOKEN }}
+          # Fail with a clear message, not a raw curl error, when the OIDC request vars are absent (fork PR, or enable-openid-connect inactive).
+          if [ -z "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] || [ -z "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            echo "::error::No Actions OIDC token on this run (a fork PR Forgejo withholds it from, or enable-openid-connect is inactive)."
+            exit 1
+          fi
+          # Forgejo appends `&audience=` to the placeholder-terminated request URL
+          # and returns {"value": "<jwt>"}. The registry accepts the JWT as a
+          # Bearer _authToken for the integration owner. pnpm ignores env
+          # references in credentials it does not expand itself, so the token is
+          # written literally into the trusted user-level ~/.npmrc.
+          NODE_AUTH_TOKEN="$(
+            curl -fsSL \
+              -H "Authorization: Bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL:-}&audience=${NPM_READ_AUDIENCE}" \
+              | sed -n 's/.*"value" *: *"\([^"]*\)".*/\1/p'
+          )"
+          if [ -z "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "::error::Failed to obtain an Actions OIDC token for the private registry install."
+            exit 1
+          fi
+          # A curl-fetched token is not auto-masked like a secrets.* value; register it so no later step can print it.
+          echo "::add-mask::${NODE_AUTH_TOKEN}"
+          echo "//code.j4k.dev/api/packages/j4k/npm/:_authToken=${NODE_AUTH_TOKEN}" > ~/.npmrc
+          # Workflow-level enable-openid-connect exposes ACTIONS_ID_TOKEN_REQUEST_* to every step; blank them so no later (PR-controlled) step can mint another token.
+          printf 'ACTIONS_ID_TOKEN_REQUEST_URL=\nACTIONS_ID_TOKEN_REQUEST_TOKEN=\n' >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile
