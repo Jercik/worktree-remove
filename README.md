@@ -26,12 +26,34 @@ Running `worktree-remove`:
 
 ## Install / run
 
-Each release is published under two names with the same files:
+Each release is published only as `@j4k-oss/worktree-remove` on the `code.j4k.dev` registry, which reads anonymously. The unscoped `worktree-remove` on npmjs.org is frozen at its last version and gets no updates.
 
-- `worktree-remove` on npmjs.org, for `npx` and `npm exec`. All examples below use it.
-- `@j4k-oss/worktree-remove` on the `code.j4k.dev` registry, for pnpm projects that exempt the `@j4k-oss` scope from `minimumReleaseAge`. The registry reads anonymously.
+The `@j4k-oss` scope also exists on npmjs.org, so always point it at the `code.j4k.dev` registry; without that, npm can fetch another owner's package from npmjs.org. Add this line to `~/.npmrc` once:
 
-To use the `code.j4k.dev` copy, map the scope to its registry and exempt it in `pnpm-workspace.yaml`, then add the package:
+```ini
+@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/
+```
+
+For a single `npx` run, passing `--@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/` on the command is enough, as the examples below do. Keep the `~/.npmrc` line for global installs: `npm update -g` and `npm outdated -g` read the registry from your configuration, so without the line they look the scoped name up on npmjs.org.
+
+You usually don’t need a global install.
+
+```bash
+# inside any worktree of /my/path/my-app
+# one-off
+npx -y --@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/ @j4k-oss/worktree-remove@latest -i
+
+# or pass a target directly
+npx -y --@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/ @j4k-oss/worktree-remove@latest feature/login-form
+
+# or install globally, which installs the `worktree-remove` command
+npm install -g --@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/ @j4k-oss/worktree-remove
+worktree-remove -i
+```
+
+If you installed the unscoped `worktree-remove` globally before, run `npm uninstall -g worktree-remove` first. Both packages provide the `worktree-remove` command, so npm stops with `EEXIST`.
+
+In a pnpm project, map the scope to its registry and exempt it from `minimumReleaseAge` in `pnpm-workspace.yaml` (this mapping replaces the flag), then add the package:
 
 ```yaml
 registries:
@@ -42,23 +64,6 @@ minimumReleaseAgeExclude:
 
 ```bash
 pnpm add -D @j4k-oss/worktree-remove
-```
-
-Both packages install the same `worktree-remove` command.
-
-You usually don’t need a global install.
-
-```bash
-# inside any worktree of /my/path/my-app
-# one-off
-npx worktree-remove -i
-
-# or pass a target directly
-npx worktree-remove feature/login-form
-
-# or install globally
-pnpm add -g worktree-remove   # or: npm i -g worktree-remove
-worktree-remove -i
 ```
 
 ## Usage
@@ -161,7 +166,7 @@ Add to your `CLAUDE.md` or `AGENTS.md`:
 ```markdown
 # Rule: `worktree-remove` Usage
 
-Run `npx -y worktree-remove --help` to learn available options.
+Run `npx -y --@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/ @j4k-oss/worktree-remove@latest --help` to learn available options. Keep the `--@j4k-oss:registry` flag: without it `npx` can fetch another owner's `@j4k-oss` package from npmjs.org.
 
 Use `worktree-remove` when you need to safely remove Git worktrees.
 It handles uncommitted changes and orphaned directories, and moves
