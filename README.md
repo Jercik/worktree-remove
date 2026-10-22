@@ -164,8 +164,10 @@ Add to your `CLAUDE.md` or `AGENTS.md`:
 Run `npx -y worktree-remove --help` to learn available options.
 
 Use `worktree-remove` when you need to safely remove Git worktrees.
-It handles uncommitted changes, orphaned directories, and moves
-files to trash instead of permanent deletion.
+It handles uncommitted changes and orphaned directories, and moves
+directories to the system trash. If that move fails for a registered
+worktree, `--force` (or `--yes` for a single worktree) lets Git delete
+it permanently; without them, removal asks first or fails.
 ```
 
 ## License
