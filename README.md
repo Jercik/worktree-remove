@@ -26,9 +26,9 @@ Running `worktree-remove`:
 
 ## Install / run
 
-Each release is published only as `@j4k-oss/worktree-remove` on the `code.j4k.dev` registry, which reads anonymously. The unscoped `worktree-remove` on npmjs.org is frozen at its last version and gets no updates.
+Each release is published only as `@j4k-oss/worktree-remove` on the `code.j4k.dev` registry, which reads anonymously. The unscoped `worktree-remove` on npmjs.org is deprecated and gets no updates.
 
-The `@j4k-oss` scope also exists on npmjs.org, so always point it at the `code.j4k.dev` registry; without that, npm can fetch another owner's package from npmjs.org. Add this line to `~/.npmrc` once:
+Always point the `@j4k-oss` scope at the `code.j4k.dev` registry: without that, `npm` looks on npmjs.org, finds nothing, and fails with a 404. Add this line to `~/.npmrc` once:
 
 ```ini
 @j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/
@@ -166,7 +166,7 @@ Add to your `CLAUDE.md` or `AGENTS.md`:
 ```markdown
 # Rule: `worktree-remove` Usage
 
-Run `npx -y --@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/ @j4k-oss/worktree-remove@latest --help` to learn available options. Keep the `--@j4k-oss:registry` flag: without it `npx` can fetch another owner's `@j4k-oss` package from npmjs.org.
+Run `npx -y --@j4k-oss:registry=https://code.j4k.dev/api/packages/j4k-oss/npm/ @j4k-oss/worktree-remove@latest --help` to learn available options. Keep the `--@j4k-oss:registry` flag: without it, `npx` looks on npmjs.org, finds nothing, and fails with a 404.
 
 Use `worktree-remove` when you need to safely remove Git worktrees.
 It handles uncommitted changes and orphaned directories, and moves
