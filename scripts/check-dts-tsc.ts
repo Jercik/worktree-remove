@@ -43,8 +43,7 @@ function isConfigurationCode(code: number): boolean {
 
 /**
  * Judges the result of a tsc run that already finished, so it starts no tsc
- * process. Callers outside the guard may use it; the `@public` tag keeps knip
- * from reporting the export as unused.
+ * process. The `@public` tag keeps knip from reporting the export as unused.
  * @public
  */
 export function interpretLeafRun(leaf: string, result: ProcessResult): LeafReport {

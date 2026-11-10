@@ -76,8 +76,7 @@ export function typecheckProjects(): string[] {
 
 /**
  * Reads the projects from a manifest already parsed, so it needs no checkout.
- * Callers outside the guard may use it; the `@public` tag keeps knip from
- * reporting the export as unused.
+ * The `@public` tag keeps knip from reporting the export as unused.
  * @public
  */
 export function projectsFromManifest(manifest: Record<string, unknown>, root: string): string[] {

@@ -296,6 +296,9 @@ jobs:
       - name: Run build
         run: pnpm run build
 
+      - name: Validate packed packages
+        run: pnpm run validate:packed-packages
+
       - name: Run tests
         run: pnpm run test
 
