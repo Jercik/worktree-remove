@@ -75,8 +75,9 @@ export function typecheckProjects(): string[] {
 }
 
 /**
- * align's tests drive this without a checkout or a tsc run; the `@public` tag
- * keeps knip from reporting the export as unused.
+ * Reads the projects from a manifest already parsed, so it needs no checkout.
+ * Callers outside the guard may use it; the `@public` tag keeps knip from
+ * reporting the export as unused.
  * @public
  */
 export function projectsFromManifest(manifest: Record<string, unknown>, root: string): string[] {
