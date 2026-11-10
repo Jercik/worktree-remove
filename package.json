@@ -44,7 +44,7 @@
     "clean": "rm -rf dist *.tsbuildinfo",
     "format": "oxfmt --config .oxfmtrc.json .",
     "format:check": "oxfmt --check --config .oxfmtrc.json .",
-    "fta": "fta-check --threshold 55",
+    "fta": "fta-check",
     "knip": "knip",
     "lint": "oxlint --deny-warnings --report-unused-disable-directives .",
     "prepack": "pnpm run rebuild",
@@ -66,7 +66,7 @@
     "trash": "^10.1.1"
   },
   "devDependencies": {
-    "@j4k-oss/fta-check": "^1.5.10",
+    "@j4k-oss/fta-check": "^1.6.0",
     "@j4k/oxlint-config": "^2.14.12",
     "@j4k/semantic-release-forgejo": "^1.2.4",
     "@total-typescript/ts-reset": "^0.6.1",
