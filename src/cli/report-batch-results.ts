@@ -31,7 +31,7 @@ export function reportBatchResults(
   }
 
   const verb = dryRun ? "Would remove" : "Removed";
-  output.warn(`${verb} ${succeededCount} of ${entries.length} worktrees.`);
+  output.notice(`${verb} ${succeededCount} of ${entries.length} worktrees.`);
   if (failed.length > 0) {
     exitWithMessage(`Failed: ${failed.join(", ")}`);
   }

@@ -62,11 +62,7 @@ const program = new Command()
 
       if (options.interactive && targets.length > 0) {
         output.warn(
-          styleText(
-            "yellow",
-            `Ignoring target${targets.length > 1 ? "s" : ""} '${targets.join("', '")}' because --interactive was specified.`,
-            { stream: process.stderr },
-          ),
+          `Ignoring target${targets.length > 1 ? "s" : ""} '${targets.join("', '")}' because --interactive was specified.`,
         );
       }
 

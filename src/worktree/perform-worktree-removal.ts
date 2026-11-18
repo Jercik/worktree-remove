@@ -75,7 +75,7 @@ export async function performWorktreeRemoval(
               },
             );
         if (!proceed) {
-          output.warn("Removal cancelled.");
+          output.notice("Removal cancelled.");
           return { status: "cancelled" };
         }
         // User confirmed git may permanently delete the directory, so force

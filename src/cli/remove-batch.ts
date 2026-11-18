@@ -59,7 +59,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
         },
       );
       if (!proceed) {
-        output.warn("Removal cancelled.");
+        output.notice("Removal cancelled.");
         return;
       }
     }
@@ -89,7 +89,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
   });
 
   if (!confirmed) {
-    output.warn("Removal cancelled.");
+    output.notice("Removal cancelled.");
     return;
   }
 

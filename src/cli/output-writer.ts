@@ -1,3 +1,5 @@
+import { styleText } from "node:util";
+
 interface OutputWriterOptions {
   verbose: boolean;
   quiet: boolean;
@@ -6,6 +8,7 @@ interface OutputWriterOptions {
 
 export interface OutputWriter {
   info: (message: string) => void;
+  notice: (message: string) => void;
   warn: (message: string) => void;
   error: (message: string) => void;
 }
@@ -16,13 +19,14 @@ export function prefixOutput(output: OutputWriter, prefix: string): OutputWriter
   };
   return {
     info: wrap(output.info),
+    notice: wrap(output.notice),
     warn: wrap(output.warn),
     error: wrap(output.error),
   };
 }
 
 const writeError = (message: string) => {
-  console.error(message);
+  console.error(styleText("red", message, { stream: process.stderr }));
 };
 
 export function createOutputWriter(options: OutputWriterOptions): OutputWriter {
@@ -39,15 +43,23 @@ export function createOutputWriter(options: OutputWriterOptions): OutputWriter {
     console.error(`${prefix}${message}`);
   };
 
-  const warn = (message: string) => {
+  const notice = (message: string) => {
     if (options.quiet) {
       return;
     }
     console.error(message);
   };
 
+  const warn = (message: string) => {
+    if (options.quiet) {
+      return;
+    }
+    console.error(styleText("yellow", message, { stream: process.stderr }));
+  };
+
   return {
     info,
+    notice,
     warn,
     error: writeError,
   };
