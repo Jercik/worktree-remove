@@ -1,14 +1,11 @@
 import { Command } from "@commander-js/extra-typings";
-import chalk from "chalk";
+import { styleText } from "node:util";
 import packageJson from "../package.json" with { type: "json" };
 import { createOutputWriter } from "./cli/output-writer.js";
 import { removeBatch } from "./cli/remove-batch.js";
 import { selectWorktrees } from "./cli/select-worktree.js";
 import { ensureGitAvailable } from "./git/git-helpers.js";
 import { createRemovalPolicy } from "./removal/removal-policy.js";
-
-const shouldUseColor = process.stderr.isTTY && !process.env.NO_COLOR;
-chalk.level = shouldUseColor ? 3 : 0;
 
 process.on("SIGINT", () => {
   console.error("\nInterrupted");
@@ -65,8 +62,10 @@ const program = new Command()
 
       if (options.interactive && targets.length > 0) {
         output.warn(
-          chalk.yellow(
+          styleText(
+            "yellow",
             `Ignoring target${targets.length > 1 ? "s" : ""} '${targets.join("', '")}' because --interactive was specified.`,
+            { stream: process.stderr },
           ),
         );
       }
@@ -89,7 +88,7 @@ const program = new Command()
       });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      console.error(chalk.red("Error:"), message);
+      console.error(styleText("red", "Error:", { stream: process.stderr }), message);
       process.exitCode = 1;
     }
   });

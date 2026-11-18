@@ -4,7 +4,7 @@
 
 import path from "node:path";
 import { checkbox } from "@inquirer/prompts";
-import chalk from "chalk";
+import { styleText } from "node:util";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import type { OutputWriter } from "./output-writer.js";
 import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
@@ -18,7 +18,11 @@ export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
   );
 
   if (sortedWorktrees.length === 0) {
-    output.warn(chalk.yellow("No removable worktrees found. The main worktree is not selectable."));
+    output.warn(
+      styleText("yellow", "No removable worktrees found. The main worktree is not selectable.", {
+        stream: process.stderr,
+      }),
+    );
     return [];
   }
 

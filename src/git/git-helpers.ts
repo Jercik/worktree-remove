@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import * as readline from "node:readline/promises";
-import chalk from "chalk";
+import { styleText } from "node:util";
 
 function getGitExecutable(): string {
   const configuredPath = process.env.WORKTREE_REMOVE_GIT_PATH?.trim();
@@ -71,7 +71,7 @@ export function normalizeBranchName(name: string): string {
 }
 
 export function exitWithMessage(message: string): never {
-  console.error(chalk.red(message));
+  console.error(styleText("red", message, { stream: process.stderr }));
   // eslint-disable-next-line unicorn/no-process-exit
   process.exit(1);
 }
