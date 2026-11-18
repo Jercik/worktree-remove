@@ -1,4 +1,5 @@
 import { styleText } from "node:util";
+import { writeError } from "./write-error.js";
 
 interface OutputWriterOptions {
   verbose: boolean;
@@ -24,10 +25,6 @@ export function prefixOutput(output: OutputWriter, prefix: string): OutputWriter
     error: wrap(output.error),
   };
 }
-
-const writeError = (message: string) => {
-  console.error(styleText("red", message, { stream: process.stderr }));
-};
 
 export function createOutputWriter(options: OutputWriterOptions): OutputWriter {
   const shouldInfo = options.verbose || options.dryRun;
