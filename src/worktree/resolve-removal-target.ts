@@ -1,8 +1,8 @@
 import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
-import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
+import { findWorktreeByPath } from "./find-worktree-by-path.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 import type { WorktreeEntry } from "../git/worktree-entry.js";
 
@@ -85,10 +85,7 @@ export async function resolveRemovalTarget(
     }
 
     targetPath = await resolveRealEntryPath(existingPath, pathApi);
-    const targetKey = normalizePathKey(targetPath, input.platform);
-    registeredWorktree = input.worktrees.find(
-      (worktree) => normalizePathKey(worktree.path, input.platform) === targetKey,
-    );
+    registeredWorktree = findWorktreeByPath(input.worktrees, targetPath, input.platform);
   }
 
   const resolvedTargetPath = pathApi.resolve(targetPath);

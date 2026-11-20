@@ -2,8 +2,8 @@ import os from "node:os";
 import path from "node:path";
 import { normalizeBranchName } from "../git/git-helpers.js";
 import { normalizeGitPath } from "../git/normalize-git-path.js";
-import { normalizePathKey } from "../fs/normalize-path-key.js";
 import type { WorktreeEntry } from "../git/worktree-entry.js";
+import { findWorktreeByPath } from "./find-worktree-by-path.js";
 
 interface ResolveWorktreeTargetInput {
   input: string;
@@ -63,10 +63,8 @@ export function resolveWorktreeTarget(
   const isPathInput = looksLikePathInput(trimmedInput);
 
   const worktreesByBranch = new Map<string, WorktreeEntry>();
-  const worktreesByPath = new Map<string, WorktreeEntry>();
 
   for (const worktree of parameters.worktrees) {
-    worktreesByPath.set(normalizePathKey(worktree.path, parameters.platform), worktree);
     if (worktree.branch) {
       worktreesByBranch.set(worktree.branch, worktree);
     }
@@ -108,12 +106,12 @@ export function resolveWorktreeTarget(
   }
 
   const directMatch =
-    worktreesByPath.get(normalizePathKey(resolvedInputPath, parameters.platform)) ??
+    findWorktreeByPath(parameters.worktrees, resolvedInputPath, parameters.platform) ??
     (expectedPath
-      ? worktreesByPath.get(normalizePathKey(expectedPath, parameters.platform))
+      ? findWorktreeByPath(parameters.worktrees, expectedPath, parameters.platform)
       : undefined) ??
     (siblingPath
-      ? worktreesByPath.get(normalizePathKey(siblingPath, parameters.platform))
+      ? findWorktreeByPath(parameters.worktrees, siblingPath, parameters.platform)
       : undefined);
 
   if (directMatch) {
