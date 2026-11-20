@@ -1,4 +1,6 @@
+import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
+import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
@@ -19,6 +21,20 @@ interface ResolveRemovalTargetResult {
   isPathInputTarget: boolean;
 }
 
+// Git records worktree paths with symlinks resolved and, on case-insensitive file
+// systems, in their on-disk case, so a target is matched in the same form. A symlink
+// named as the target stays the target, so removal never reaches what it points to.
+async function resolveRealEntryPath(
+  entryPath: string,
+  pathApi: typeof path.posix,
+): Promise<string> {
+  const entry = await lstat(entryPath);
+  if (entry.isSymbolicLink()) {
+    return pathApi.join(await realpath(pathApi.dirname(entryPath)), pathApi.basename(entryPath));
+  }
+  return realpath(entryPath);
+}
+
 export async function resolveRemovalTarget(
   input: ResolveRemovalTargetInput,
 ): Promise<ResolveRemovalTargetResult> {
@@ -31,13 +47,11 @@ export async function resolveRemovalTarget(
 
   const isPathInputTarget = resolvedTarget.isPathInput;
 
-  let registeredPath: string | undefined;
-  const registeredWorktree =
-    resolvedTarget.kind === "registered" ? resolvedTarget.worktree : undefined;
+  let registeredWorktree: WorktreeEntry | undefined;
   let targetPath: string;
 
   if (resolvedTarget.kind === "registered") {
-    registeredPath = resolvedTarget.worktree.path;
+    registeredWorktree = resolvedTarget.worktree;
     targetPath = resolvedTarget.worktree.path;
   } else {
     let existingPath: string | undefined;
@@ -70,7 +84,11 @@ export async function resolveRemovalTarget(
       );
     }
 
-    targetPath = existingPath;
+    targetPath = await resolveRealEntryPath(existingPath, pathApi);
+    const targetKey = normalizePathKey(targetPath, input.platform);
+    registeredWorktree = input.worktrees.find(
+      (worktree) => normalizePathKey(worktree.path, input.platform) === targetKey,
+    );
   }
 
   const resolvedTargetPath = pathApi.resolve(targetPath);
@@ -80,7 +98,7 @@ export async function resolveRemovalTarget(
 
   return {
     targetPath: resolvedTargetPath,
-    registeredPath,
+    registeredPath: registeredWorktree?.path,
     registeredWorktree,
     isPathInputTarget,
   };
