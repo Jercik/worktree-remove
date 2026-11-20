@@ -1,11 +1,17 @@
 import { git } from "./git-helpers.js";
 
-export function hasUncommittedChanges(worktreePath: string): boolean {
+export type UncommittedChanges =
+  | { state: "none" }
+  | { state: "present" }
+  | { state: "unknown"; reason: string };
+
+export function checkUncommittedChanges(worktreePath: string): UncommittedChanges {
+  let status: string;
   try {
-    const status = git("-C", worktreePath, "status", "--porcelain");
-    return status !== "";
-  } catch {
-    // If git status fails, the directory might not be a valid git repo
-    return false;
+    status = git("-C", worktreePath, "status", "--porcelain");
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message.trim() : String(error);
+    return { state: "unknown", reason };
   }
+  return status === "" ? { state: "none" } : { state: "present" };
 }

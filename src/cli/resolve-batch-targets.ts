@@ -7,10 +7,11 @@
 
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
-import { hasUncommittedChanges } from "../git/check-uncommitted-changes.js";
+import { checkUncommittedChanges } from "../git/check-uncommitted-changes.js";
 import { assertRemovalSafe } from "../worktree/assert-removal-safe.js";
 import { getRemovalDisplayInfo, type RemovalDisplayInfo } from "../worktree/get-removal-display.js";
 import { resolveRemovalTarget } from "../worktree/resolve-removal-target.js";
+import type { UncommittedChanges } from "../git/check-uncommitted-changes.js";
 import type { WorktreeEntry } from "../git/worktree-entry.js";
 
 export interface ResolvedTarget {
@@ -20,7 +21,7 @@ export interface ResolvedTarget {
   registeredWorktree: WorktreeEntry | undefined;
   isPathInputTarget: boolean;
   directoryExists: boolean;
-  hasDirtyChanges: boolean;
+  uncommittedChanges: UncommittedChanges;
   displayInfo: RemovalDisplayInfo;
 }
 
@@ -66,10 +67,10 @@ export async function resolveBatchTargets(input: ResolveBatchInput): Promise<Res
     });
 
     const directoryExists_ = await directoryExists(resolvedTarget.targetPath);
-    const hasDirtyChanges =
-      resolvedTarget.registeredPath !== undefined &&
-      directoryExists_ &&
-      hasUncommittedChanges(resolvedTarget.registeredPath);
+    const uncommittedChanges: UncommittedChanges =
+      resolvedTarget.registeredPath !== undefined && directoryExists_
+        ? checkUncommittedChanges(resolvedTarget.registeredPath)
+        : { state: "none" };
 
     const displayInfo = getRemovalDisplayInfo({
       cwd: input.cwd,
@@ -86,7 +87,7 @@ export async function resolveBatchTargets(input: ResolveBatchInput): Promise<Res
       registeredWorktree: resolvedTarget.registeredWorktree,
       isPathInputTarget: resolvedTarget.isPathInputTarget,
       directoryExists: directoryExists_,
-      hasDirtyChanges,
+      uncommittedChanges,
       displayInfo,
     });
   }

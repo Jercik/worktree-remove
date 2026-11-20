@@ -6,6 +6,7 @@
 
 import pLimit from "p-limit";
 import { confirmAction } from "./confirm-action.js";
+import { formatUncommittedChangesWarning } from "./format-uncommitted-changes-warning.js";
 import { prepareCwdSwitch } from "./handle-cwd-switch.js";
 import type { OutputWriter } from "./output-writer.js";
 import { prefixOutput } from "./output-writer.js";
@@ -41,23 +42,23 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
   }
 
   // Phase 1b: Batch dirty-check prompt
-  const dirtyTargets = resolved.filter((r) => r.hasDirtyChanges);
-  if (dirtyTargets.length > 0) {
-    const dirtyNames = dirtyTargets.map((r) => r.displayInfo.targetDirectoryName).join(", ");
-
+  const uncommittedChangesWarning = formatUncommittedChangesWarning(
+    resolved.map((r) => ({
+      name: r.displayInfo.targetDirectoryName,
+      uncommittedChanges: r.uncommittedChanges,
+    })),
+  );
+  if (uncommittedChangesWarning.length > 0) {
     if (policy.shouldWarnInsteadOfPrompt()) {
-      output.warn(
-        `${dirtyTargets.length} worktree${dirtyTargets.length > 1 ? "s have" : " has"} uncommitted changes: ${dirtyNames}`,
-      );
+      for (const line of uncommittedChangesWarning) {
+        output.warn(line);
+      }
     } else {
-      const proceed = await confirmAction(
-        `${dirtyTargets.length} worktree${dirtyTargets.length > 1 ? "s have" : " has"} uncommitted changes (${dirtyNames}). Remove anyway?`,
-        {
-          policy,
-          promptDisabledMessage:
-            "Worktrees have uncommitted changes. Re-run with --yes, --force, or --dry-run to proceed in non-interactive mode.",
-        },
-      );
+      const warning = uncommittedChangesWarning.join("\n");
+      const proceed = await confirmAction(`${warning}\nRemove anyway?`, {
+        policy,
+        promptDisabledMessage: `${warning}\nRe-run with --yes, --force, or --dry-run to proceed in non-interactive mode.`,
+      });
       if (!proceed) {
         output.notice("Removal cancelled.");
         return;
