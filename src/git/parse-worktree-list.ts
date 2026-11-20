@@ -33,6 +33,7 @@ export function parseWorktreeListPorcelain(
         head: undefined,
         branch: undefined,
         isDetached: false,
+        lock: undefined,
       };
       continue;
     }
@@ -52,6 +53,13 @@ export function parseWorktreeListPorcelain(
       const rawBranchRaw = line.slice("branch ".length);
       const rawBranch = isNulSeparated ? rawBranchRaw : rawBranchRaw.trim();
       current.branch = rawBranch ? normalizeBranchName(rawBranch) : undefined;
+      continue;
+    }
+
+    if (line.startsWith("locked ") || line.trim() === "locked") {
+      const reasonRaw = line.slice("locked ".length);
+      const reason = isNulSeparated ? reasonRaw : reasonRaw.trim();
+      current.lock = { reason: reason || undefined };
       continue;
     }
 

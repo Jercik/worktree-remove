@@ -30,6 +30,7 @@ describe("resolveRemovalTarget through a symlinked directory", () => {
       head: "2222222222222222222222222222222222222222",
       branch: "feature",
       isDetached: false,
+      lock: undefined,
     };
 
     const result = await resolveRemovalTarget({

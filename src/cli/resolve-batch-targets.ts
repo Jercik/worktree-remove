@@ -62,7 +62,7 @@ export async function resolveBatchTargets(input: ResolveBatchInput): Promise<Res
     assertRemovalSafe({
       targetPath: resolvedTarget.targetPath,
       mainPath: input.mainPath,
-      registeredPath: resolvedTarget.registeredPath,
+      registeredWorktree: resolvedTarget.registeredWorktree,
     });
 
     const directoryExists_ = await directoryExists(resolvedTarget.targetPath);

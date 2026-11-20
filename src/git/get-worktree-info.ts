@@ -33,10 +33,8 @@ export function getWorktreeInfo(): WorktreeInfo {
   const mainPath = normalizeGitPath(parsed.mainPath);
 
   const normalizedWorktrees: WorktreeEntry[] = parsed.worktrees.slice(1).map((worktree) => ({
+    ...worktree,
     path: normalizeGitPath(worktree.path),
-    head: worktree.head,
-    branch: worktree.branch,
-    isDetached: worktree.isDetached,
   }));
 
   return { mainPath, worktrees: normalizedWorktrees };

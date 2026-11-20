@@ -24,18 +24,21 @@ detached
           head: "1111111111111111111111111111111111111111",
           branch: "main",
           isDetached: false,
+          lock: undefined,
         },
         {
           path: "/repo/wt-branch",
           head: "2222222222222222222222222222222222222222",
           branch: "feature/foo",
           isDetached: false,
+          lock: undefined,
         },
         {
           path: "/repo/wt-detached",
           head: "3333333333333333333333333333333333333333",
           branch: undefined,
           isDetached: true,
+          lock: undefined,
         },
       ],
     });
@@ -53,12 +56,14 @@ detached
           head: "1111111111111111111111111111111111111111",
           branch: "main",
           isDetached: false,
+          lock: undefined,
         },
         {
           path: "/repo/wt-detached",
           head: "3333333333333333333333333333333333333333",
           branch: undefined,
           isDetached: true,
+          lock: undefined,
         },
       ],
     });
@@ -76,6 +81,7 @@ detached
           head: "1111111111111111111111111111111111111111",
           branch: "main",
           isDetached: false,
+          lock: undefined,
         },
       ],
     });
@@ -95,6 +101,7 @@ detached\t
           head: "3333333333333333333333333333333333333333",
           branch: undefined,
           isDetached: true,
+          lock: undefined,
         },
       ],
     });
@@ -116,6 +123,7 @@ detached\t
           head: undefined,
           branch: undefined,
           isDetached: false,
+          lock: undefined,
         },
       ],
     });
@@ -134,6 +142,7 @@ branch refs/heads/feature/foo
           head: undefined,
           branch: "feature/foo",
           isDetached: false,
+          lock: undefined,
         },
       ],
     });
@@ -156,6 +165,7 @@ branch refs/heads/main
           head: "1111111111111111111111111111111111111111",
           branch: "main",
           isDetached: false,
+          lock: undefined,
         },
       ],
     });
@@ -174,8 +184,58 @@ bare
           head: undefined,
           branch: undefined,
           isDetached: false,
+          lock: undefined,
         },
       ],
     });
+  });
+
+  it("parses locked worktrees with and without a reason", () => {
+    const output = `worktree /repo/main
+HEAD 1111111111111111111111111111111111111111
+branch refs/heads/main
+
+worktree /repo/wt-locked
+HEAD 2222222222222222222222222222222222222222
+branch refs/heads/feature/foo
+locked
+
+worktree /repo/wt-locked-reason
+HEAD 3333333333333333333333333333333333333333
+branch refs/heads/feature/bar
+locked on external drive
+`;
+
+    expect(parseWorktreeListPorcelain(output).worktrees.slice(1)).toStrictEqual([
+      {
+        path: "/repo/wt-locked",
+        head: "2222222222222222222222222222222222222222",
+        branch: "feature/foo",
+        isDetached: false,
+        lock: { reason: undefined },
+      },
+      {
+        path: "/repo/wt-locked-reason",
+        head: "3333333333333333333333333333333333333333",
+        branch: "feature/bar",
+        isDetached: false,
+        lock: { reason: "on external drive" },
+      },
+    ]);
+  });
+
+  it("keeps a locked worktree's reason verbatim in NUL-separated output", () => {
+    const output =
+      "worktree /repo/main\0HEAD 1111111111111111111111111111111111111111\0branch refs/heads/main\0\0worktree /repo/wt-locked\0HEAD 2222222222222222222222222222222222222222\0detached\0locked  two\nlines\0\0";
+
+    expect(parseWorktreeListPorcelain(output).worktrees.slice(1)).toStrictEqual([
+      {
+        path: "/repo/wt-locked",
+        head: "2222222222222222222222222222222222222222",
+        branch: undefined,
+        isDetached: true,
+        lock: { reason: " two\nlines" },
+      },
+    ]);
   });
 });

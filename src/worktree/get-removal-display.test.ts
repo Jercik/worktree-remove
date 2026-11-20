@@ -7,6 +7,7 @@ const worktreeWithBranch: WorktreeEntry = {
   head: "abc1234def5678",
   branch: "feature",
   isDetached: false,
+  lock: undefined,
 };
 
 const worktreeDetached: WorktreeEntry = {
@@ -14,6 +15,7 @@ const worktreeDetached: WorktreeEntry = {
   head: "deadbeef1234567",
   branch: undefined,
   isDetached: true,
+  lock: undefined,
 };
 
 const worktreeDetachedNoHead: WorktreeEntry = {
@@ -21,6 +23,7 @@ const worktreeDetachedNoHead: WorktreeEntry = {
   head: undefined,
   branch: undefined,
   isDetached: true,
+  lock: undefined,
 };
 
 describe("getRemovalDisplayInfo", () => {

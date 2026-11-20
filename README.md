@@ -94,6 +94,7 @@ You can also specify the worktree directly by:
 
 Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation. Path targets can point anywhere, so use caution when providing absolute or home-relative paths.
 For safety, unregistered directories inside the main worktree are refused.
+Locked worktrees are refused too, even with `--force`; run `git worktree unlock <path>` first.
 
 ```bash
 worktree-remove <target...>
