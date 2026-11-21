@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import * as readline from "node:readline/promises";
+import { exitInterrupted } from "../cli/exit-interrupted.js";
 import { writeError } from "../cli/write-error.js";
 
 function getGitExecutable(): string {
@@ -81,6 +82,7 @@ export async function confirm(message: string): Promise<boolean> {
     input: process.stdin,
     output: process.stderr,
   });
+  rl.on("SIGINT", exitInterrupted);
 
   try {
     const answer = await rl.question(`${message} [y/N] `);

@@ -5,6 +5,7 @@
 import path from "node:path";
 import { checkbox } from "@inquirer/prompts";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
+import { exitInterrupted } from "./exit-interrupted.js";
 import type { OutputWriter } from "./output-writer.js";
 import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 
@@ -63,17 +64,24 @@ export async function selectWorktrees(output: OutputWriter): Promise<string[]> {
     }),
   ];
 
-  return checkbox(
-    {
-      message: "Select worktrees to remove:",
-      choices,
-      pageSize: 15,
-      loop: false,
-      required: true,
-    },
-    {
-      input: process.stdin,
-      output: process.stderr,
-    },
-  );
+  try {
+    return await checkbox(
+      {
+        message: "Select worktrees to remove:",
+        choices,
+        pageSize: 15,
+        loop: false,
+        required: true,
+      },
+      {
+        input: process.stdin,
+        output: process.stderr,
+      },
+    );
+  } catch (error) {
+    if (error instanceof Error && error.name === "ExitPromptError") {
+      exitInterrupted();
+    }
+    throw error;
+  }
 }

@@ -1,5 +1,6 @@
 import { Command } from "@commander-js/extra-typings";
 import packageJson from "../package.json" with { type: "json" };
+import { exitInterrupted } from "./cli/exit-interrupted.js";
 import { createOutputWriter } from "./cli/output-writer.js";
 import { removeBatch } from "./cli/remove-batch.js";
 import { selectWorktrees } from "./cli/select-worktree.js";
@@ -7,10 +8,7 @@ import { writeError } from "./cli/write-error.js";
 import { ensureGitAvailable } from "./git/git-helpers.js";
 import { createRemovalPolicy } from "./removal/removal-policy.js";
 
-process.on("SIGINT", () => {
-  console.error("\nInterrupted");
-  process.exit(130);
-});
+process.on("SIGINT", exitInterrupted);
 
 const program = new Command()
   .name("worktree-remove")
