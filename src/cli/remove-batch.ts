@@ -130,11 +130,13 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
   // Phase 4: Report summary (skip for single targets — performWorktreeRemoval
   // already reports its own outcome, but still check exit code)
   if (isSingleTarget) {
-    const failed = settled.some(
-      (entry) => entry.result.status === "rejected" || entry.result.value.status === "failed",
-    );
-    if (failed) {
-      throw new Error(`Failed to remove '${firstTarget.displayInfo.targetDirectoryName}'.`);
+    for (const { result } of settled) {
+      if (result.status === "rejected") {
+        throw result.reason;
+      }
+      if (result.value.status === "failed") {
+        throw new Error(`Failed to remove '${firstTarget.displayInfo.targetDirectoryName}'.`);
+      }
     }
     // "cancelled" — user declined a prompt; exit cleanly (code 0)
   } else {
