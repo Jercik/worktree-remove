@@ -5,7 +5,6 @@
 
 import type { OutputWriter } from "./output-writer.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
-import { exitWithMessage } from "../git/git-helpers.js";
 import { isPathEqualOrWithin } from "../worktree/is-path-equal-or-within.js";
 
 interface TargetEntry {
@@ -58,8 +57,9 @@ export function prepareCwdSwitch(input: CwdSwitchInput): (() => void) | undefine
         process.chdir(mainPath);
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
-        exitWithMessage(
+        throw new Error(
           `Could not switch working directory to main worktree '${mainPath}': ${reason}`,
+          { cause: error },
         );
       }
       output.info(`Switched process working directory to '${mainPath}' before removal.`);

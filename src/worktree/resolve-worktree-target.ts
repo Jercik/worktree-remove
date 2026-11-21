@@ -20,8 +20,7 @@ type ResolvedWorktreeTarget =
       resolvedInputPath: string;
       isPathInput: boolean;
       input: string;
-    }
-  | { kind: "ambiguous"; message: string };
+    };
 
 function looksLikePathInput(input: string): boolean {
   if (input === "") {
@@ -79,10 +78,9 @@ export function resolveWorktreeTarget(
   const normalizedBranch = isPathInput ? undefined : stripBranchPrefix(trimmedInput);
 
   if (normalizedBranch && containsParentDirectorySegment(normalizedBranch)) {
-    return {
-      kind: "ambiguous",
-      message: `Input '${trimmedInput}' contains '..' path segments. Pass a full path or use --interactive.`,
-    };
+    throw new Error(
+      `Input '${trimmedInput}' contains '..' path segments. Pass a full path or use --interactive.`,
+    );
   }
 
   const resolvedInputPath = pathApi.resolve(
@@ -138,10 +136,9 @@ export function resolveWorktreeTarget(
   }
 
   if (basenameMatches.length > 1) {
-    return {
-      kind: "ambiguous",
-      message: `Multiple worktrees match '${trimmedInput}'. Re-run with --interactive or pass a full path.`,
-    };
+    throw new Error(
+      `Multiple worktrees match '${trimmedInput}'. Re-run with --interactive or pass a full path.`,
+    );
   }
 
   const candidatePaths = isPathInput

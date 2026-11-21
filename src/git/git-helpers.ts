@@ -1,5 +1,4 @@
 import { spawnSync } from "node:child_process";
-import { writeError } from "../cli/write-error.js";
 
 function getGitExecutable(): string {
   const configuredPath = process.env.WORKTREE_REMOVE_GIT_PATH?.trim();
@@ -17,7 +16,7 @@ export function ensureGitAvailable(): void {
       gitExecutable === "git"
         ? "Install Git or set WORKTREE_REMOVE_GIT_PATH to a git executable."
         : `Check WORKTREE_REMOVE_GIT_PATH ('${gitExecutable}') or install Git.`;
-    exitWithMessage(`Git is required. ${hint}`);
+    throw new Error(`Git is required. ${hint}`);
   }
 }
 
@@ -58,10 +57,4 @@ export function git(...arguments_: [...string[], { cwd?: string }] | string[]): 
     throw new Error(result.stderr || `git ${gitArguments[0] ?? "command"} failed`);
   }
   return result.stdout.trim();
-}
-
-export function exitWithMessage(message: string): never {
-  writeError(message);
-  // eslint-disable-next-line unicorn/no-process-exit
-  process.exit(1);
 }

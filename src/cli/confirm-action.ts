@@ -1,6 +1,5 @@
 import * as readline from "node:readline/promises";
 import { exitInterrupted } from "./exit-interrupted.js";
-import { exitWithMessage } from "../git/git-helpers.js";
 import type { RemovalPolicy } from "../removal/removal-policy.js";
 
 interface ConfirmActionOptions {
@@ -16,7 +15,7 @@ export async function confirmAction(
     return true;
   }
   if (!options.policy.allowPrompt) {
-    exitWithMessage(options.promptDisabledMessage);
+    throw new Error(options.promptDisabledMessage);
   }
   return askYesNo(message);
 }

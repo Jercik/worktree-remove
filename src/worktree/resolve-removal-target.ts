@@ -1,6 +1,5 @@
 import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
-import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { isLinkedWorktreeOf } from "../git/is-linked-worktree-of.js";
@@ -44,10 +43,6 @@ export async function resolveRemovalTarget(
   const pathApi = input.platform === "win32" ? path.win32 : path.posix;
   const resolvedTarget = resolveWorktreeTarget(input);
 
-  if (resolvedTarget.kind === "ambiguous") {
-    exitWithMessage(resolvedTarget.message);
-  }
-
   const isPathInputTarget = resolvedTarget.isPathInput;
 
   let registeredWorktree: WorktreeEntry | undefined;
@@ -74,7 +69,7 @@ export async function resolveRemovalTarget(
     }
 
     if (!existingPath) {
-      exitWithMessage(
+      throw new Error(
         resolvedTarget.isPathInput
           ? `No worktree or directory found at '${resolvedTarget.resolvedInputPath}'.`
           : `No worktree or directory found for '${resolvedTarget.input}'.`,
@@ -82,7 +77,7 @@ export async function resolveRemovalTarget(
     }
 
     if (secondExistingPath) {
-      exitWithMessage(
+      throw new Error(
         `Multiple directories exist for '${resolvedTarget.input}': '${existingPath}' and '${secondExistingPath}'. Re-run with --interactive or pass a full path.`,
       );
     }
@@ -97,7 +92,7 @@ export async function resolveRemovalTarget(
       (await isLinkedWorktreeOf(targetPath, input.commonDir));
 
     if (!resolvedTarget.isPathInput && !isRepositoryWorktree) {
-      exitWithMessage(
+      throw new Error(
         `'${existingPath}' matches '${resolvedTarget.input}' but is not a worktree of this repository. Pass its path to remove it anyway.`,
       );
     }
@@ -105,7 +100,7 @@ export async function resolveRemovalTarget(
 
   const resolvedTargetPath = pathApi.resolve(targetPath);
   if (pathApi.parse(resolvedTargetPath).root === resolvedTargetPath) {
-    exitWithMessage("Refusing to remove a filesystem root directory.");
+    throw new Error("Refusing to remove a filesystem root directory.");
   }
 
   return {

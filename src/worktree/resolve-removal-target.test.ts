@@ -1,15 +1,9 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, mkdir, realpath, rename, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { resolveRemovalTarget } from "./resolve-removal-target.js";
-
-vi.mock("../git/git-helpers.js", () => ({
-  exitWithMessage: (message: string): never => {
-    throw new Error(message);
-  },
-}));
 
 function runGit(cwd: string, arguments_: string[]): void {
   const result = spawnSync(

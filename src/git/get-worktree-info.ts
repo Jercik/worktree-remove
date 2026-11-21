@@ -1,5 +1,5 @@
 import path from "node:path";
-import { git, exitWithMessage } from "./git-helpers.js";
+import { git } from "./git-helpers.js";
 import { normalizeGitPath } from "./normalize-git-path.js";
 import { parseWorktreeListPorcelain } from "./parse-worktree-list.js";
 import type { WorktreeEntry } from "./worktree-entry.js";
@@ -29,7 +29,7 @@ export function getWorktreeInfo(): WorktreeInfo {
   });
 
   if (parsed.worktrees.length === 0 || !parsed.mainPath) {
-    exitWithMessage("Unable to determine main worktree from git worktree list");
+    throw new Error("Unable to determine main worktree from git worktree list");
   }
 
   const mainPath = normalizeGitPath(parsed.mainPath);

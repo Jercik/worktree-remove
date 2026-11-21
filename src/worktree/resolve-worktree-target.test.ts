@@ -227,35 +227,33 @@ describe("resolveWorktreeTarget", () => {
     });
   });
 
-  it("returns an ambiguous result for multiple basename matches", () => {
-    const result = resolveWorktreeTarget({
-      input: "repo-test-29",
-      cwd: "/Users/acme/repo",
-      mainPath: "/Users/acme/repo",
-      worktrees: [
-        {
-          path: "/tmp/repo-test-29",
-          head: "4444444444444444444444444444444444444444",
-          branch: undefined,
-          isDetached: true,
-          lock: undefined,
-        },
-        {
-          path: "/var/repo-test-29",
-          head: "5555555555555555555555555555555555555555",
-          branch: undefined,
-          isDetached: true,
-          lock: undefined,
-        },
-      ],
-      platform: "linux",
-    });
-
-    expect(result).toStrictEqual({
-      kind: "ambiguous",
-      message:
-        "Multiple worktrees match 'repo-test-29'. Re-run with --interactive or pass a full path.",
-    });
+  it("refuses input matching multiple worktree basenames", () => {
+    expect(() =>
+      resolveWorktreeTarget({
+        input: "repo-test-29",
+        cwd: "/Users/acme/repo",
+        mainPath: "/Users/acme/repo",
+        worktrees: [
+          {
+            path: "/tmp/repo-test-29",
+            head: "4444444444444444444444444444444444444444",
+            branch: undefined,
+            isDetached: true,
+            lock: undefined,
+          },
+          {
+            path: "/var/repo-test-29",
+            head: "5555555555555555555555555555555555555555",
+            branch: undefined,
+            isDetached: true,
+            lock: undefined,
+          },
+        ],
+        platform: "linux",
+      }),
+    ).toThrow(
+      "Multiple worktrees match 'repo-test-29'. Re-run with --interactive or pass a full path.",
+    );
   });
 
   it("matches basenames case-insensitively on win32", () => {
@@ -307,19 +305,17 @@ describe("resolveWorktreeTarget", () => {
   });
 
   it("rejects branch-like input containing '..' path segments", () => {
-    const result = resolveWorktreeTarget({
-      input: "feature/../oops",
-      cwd: "/Users/acme/repo",
-      mainPath: "/Users/acme/repo",
-      worktrees: [],
-      platform: "linux",
-    });
-
-    expect(result).toStrictEqual({
-      kind: "ambiguous",
-      message:
-        "Input 'feature/../oops' contains '..' path segments. Pass a full path or use --interactive.",
-    });
+    expect(() =>
+      resolveWorktreeTarget({
+        input: "feature/../oops",
+        cwd: "/Users/acme/repo",
+        mainPath: "/Users/acme/repo",
+        worktrees: [],
+        platform: "linux",
+      }),
+    ).toThrow(
+      "Input 'feature/../oops' contains '..' path segments. Pass a full path or use --interactive.",
+    );
   });
 
   it("returns candidate paths for orphaned directory name input", () => {

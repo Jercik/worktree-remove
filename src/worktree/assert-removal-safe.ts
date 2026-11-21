@@ -1,4 +1,3 @@
-import { exitWithMessage } from "../git/git-helpers.js";
 import type { WorktreeEntry } from "../git/worktree-entry.js";
 import { normalizePathKey } from "../fs/normalize-path-key.js";
 import { isPathStrictlyWithin } from "./is-path-strictly-within.js";
@@ -11,7 +10,7 @@ interface RemovalSafetyInput {
 
 export function assertRemovalSafe(input: RemovalSafetyInput): void {
   if (normalizePathKey(input.targetPath) === normalizePathKey(input.mainPath)) {
-    exitWithMessage("Refusing to remove the main worktree.");
+    throw new Error("Refusing to remove the main worktree.");
   }
 
   if (
@@ -21,7 +20,7 @@ export function assertRemovalSafe(input: RemovalSafetyInput): void {
       platform: process.platform,
     })
   ) {
-    exitWithMessage("Refusing to remove a directory containing the main worktree.");
+    throw new Error("Refusing to remove a directory containing the main worktree.");
   }
 
   if (
@@ -32,14 +31,14 @@ export function assertRemovalSafe(input: RemovalSafetyInput): void {
       platform: process.platform,
     })
   ) {
-    exitWithMessage("Refusing to remove an unregistered directory inside the main worktree.");
+    throw new Error("Refusing to remove an unregistered directory inside the main worktree.");
   }
 
   const { registeredWorktree } = input;
   if (registeredWorktree?.lock) {
     const { reason } = registeredWorktree.lock;
     const reasonSuffix = reason ? ` (reason: ${reason})` : "";
-    exitWithMessage(
+    throw new Error(
       `Refusing to remove locked worktree '${registeredWorktree.path}'${reasonSuffix}. Unlock it with 'git worktree unlock' first.`,
     );
   }

@@ -1,12 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-
-vi.mock("../git/git-helpers.js", () => ({
-  exitWithMessage: (message: string): never => {
-    throw new Error(message);
-  },
-}));
-
-const { assertRemovalSafe } = await import("./assert-removal-safe.js");
+import { describe, it, expect } from "vitest";
+import { assertRemovalSafe } from "./assert-removal-safe.js";
 
 describe("assertRemovalSafe", () => {
   it("throws when target equals main worktree", () => {

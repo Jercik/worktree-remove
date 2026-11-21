@@ -14,7 +14,6 @@ import { reportBatchResults } from "./report-batch-results.js";
 import type { BatchResultEntry } from "./report-batch-results.js";
 import { resolveBatchTargets, type ResolvedTarget } from "./resolve-batch-targets.js";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
-import { exitWithMessage } from "../git/git-helpers.js";
 import type { RemovalPolicy } from "../removal/removal-policy.js";
 import { performWorktreeRemoval } from "../worktree/perform-worktree-removal.js";
 
@@ -39,7 +38,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
 
   const [firstTarget] = resolved;
   if (!firstTarget) {
-    exitWithMessage("No valid targets to remove.");
+    throw new Error("No valid targets to remove.");
   }
 
   // Phase 1b: Batch dirty-check prompt
@@ -135,7 +134,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
       (entry) => entry.result.status === "rejected" || entry.result.value.status === "failed",
     );
     if (failed) {
-      exitWithMessage(`Failed to remove '${firstTarget.displayInfo.targetDirectoryName}'.`);
+      throw new Error(`Failed to remove '${firstTarget.displayInfo.targetDirectoryName}'.`);
     }
     // "cancelled" — user declined a prompt; exit cleanly (code 0)
   } else {

@@ -37,10 +37,9 @@ export async function resolveBatchTargets(input: ResolveBatchInput): Promise<Res
   const resolved: ResolvedTarget[] = [];
   const seenPaths = new Set<string>();
 
-  // Resolution is fail-fast: if any target is invalid (ambiguous, unsafe, not
-  // found), the process exits immediately via exitWithMessage. This is safe
-  // because resolution runs before confirmation or removal (Phase 1), so no
-  // worktrees have been modified yet.
+  // Resolution is fail-fast: the first invalid target (ambiguous, unsafe, not
+  // found) throws and ends the run. This is safe because resolution runs before
+  // confirmation or removal (Phase 1), so no worktrees have been modified yet.
   for (const target of input.targets) {
     const trimmedInput = target.trim();
     if (!trimmedInput) {

@@ -51,11 +51,9 @@ const program = new Command()
       });
 
       if (interactiveSelection && !allowPrompt) {
-        output.error(
+        throw new Error(
           "Interactive selection is disabled in non-interactive mode. Provide a target or re-run without CI/--no-interactive.",
         );
-        process.exitCode = 1;
-        return;
       }
 
       if (options.interactive && targets.length > 0) {
@@ -65,9 +63,7 @@ const program = new Command()
       }
 
       if (targets.length === 0 && !interactiveSelection) {
-        output.error("Missing target worktree. Provide a target or use --interactive.");
-        process.exitCode = 1;
-        return;
+        throw new Error("Missing target worktree. Provide a target or use --interactive.");
       }
 
       const selectedTargets = interactiveSelection ? await selectWorktrees(output) : targets;

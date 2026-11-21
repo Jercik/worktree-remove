@@ -1,5 +1,4 @@
 import type { PerformWorktreeRemovalResult } from "../worktree/perform-worktree-removal.js";
-import { exitWithMessage } from "../git/git-helpers.js";
 import type { OutputWriter } from "./output-writer.js";
 
 export interface BatchResultEntry {
@@ -33,6 +32,6 @@ export function reportBatchResults(
   const verb = dryRun ? "Would remove" : "Removed";
   output.notice(`${verb} ${succeededCount} of ${entries.length} worktrees.`);
   if (failed.length > 0) {
-    exitWithMessage(`Failed: ${failed.join(", ")}`);
+    throw new Error(`Failed: ${failed.join(", ")}`);
   }
 }
