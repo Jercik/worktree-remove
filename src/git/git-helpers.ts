@@ -60,12 +60,6 @@ export function git(...arguments_: [...string[], { cwd?: string }] | string[]): 
   return result.stdout.trim();
 }
 
-export function normalizeBranchName(name: string): string {
-  return name
-    .trim()
-    .replace(/^(?:refs\/heads\/|refs\/remotes\/origin\/|remotes\/origin\/|origin\/)/u, "");
-}
-
 export function exitWithMessage(message: string): never {
   writeError(message);
   // eslint-disable-next-line unicorn/no-process-exit

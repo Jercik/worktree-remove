@@ -1,4 +1,3 @@
-import { normalizeBranchName } from "./git-helpers.js";
 import type { WorktreeEntry } from "./worktree-entry.js";
 
 interface ParsedWorktreeList {
@@ -52,7 +51,7 @@ export function parseWorktreeListPorcelain(
     if (line.startsWith("branch ")) {
       const rawBranchRaw = line.slice("branch ".length);
       const rawBranch = isNulSeparated ? rawBranchRaw : rawBranchRaw.trim();
-      current.branch = rawBranch ? normalizeBranchName(rawBranch) : undefined;
+      current.branch = rawBranch ? rawBranch.replace(/^refs\/heads\//u, "") : undefined;
       continue;
     }
 

@@ -70,6 +70,73 @@ describe("resolveWorktreeTarget", () => {
     });
   });
 
+  it("prefers a branch named exactly as typed over its remote shorthand", () => {
+    const result = resolveWorktreeTarget({
+      input: "origin/foo",
+      cwd: "/Users/acme/repo",
+      mainPath: "/Users/acme/repo",
+      worktrees: [
+        {
+          path: "/Users/acme/repo-origin-foo",
+          head: "2222222222222222222222222222222222222222",
+          branch: "origin/foo",
+          isDetached: false,
+          lock: undefined,
+        },
+        {
+          path: "/Users/acme/repo-foo",
+          head: "1111111111111111111111111111111111111111",
+          branch: "foo",
+          isDetached: false,
+          lock: undefined,
+        },
+      ],
+      platform: "linux",
+    });
+
+    expect(result).toStrictEqual({
+      kind: "registered",
+      worktree: {
+        path: "/Users/acme/repo-origin-foo",
+        head: "2222222222222222222222222222222222222222",
+        branch: "origin/foo",
+        isDetached: false,
+        lock: undefined,
+      },
+      isPathInput: false,
+    });
+  });
+
+  it("resolves a remote shorthand to the local branch it names", () => {
+    const result = resolveWorktreeTarget({
+      input: "origin/foo",
+      cwd: "/Users/acme/repo",
+      mainPath: "/Users/acme/repo",
+      worktrees: [
+        {
+          path: "/Users/acme/repo-foo",
+          head: "1111111111111111111111111111111111111111",
+          branch: "foo",
+          isDetached: false,
+          lock: undefined,
+        },
+      ],
+      platform: "linux",
+    });
+
+    expect(result).toStrictEqual({
+      kind: "registered",
+      worktree: {
+        path: "/Users/acme/repo-foo",
+        head: "1111111111111111111111111111111111111111",
+        branch: "foo",
+        isDetached: false,
+        lock: undefined,
+      },
+      isPathInput: false,
+    });
+  });
+
   it("resolves detached worktree by expected repo-branch path", () => {
     const result = resolveWorktreeTarget({
       input: "test-29",

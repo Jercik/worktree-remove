@@ -1,6 +1,5 @@
 import os from "node:os";
 import path from "node:path";
-import { normalizeBranchName } from "../git/git-helpers.js";
 import { normalizeGitPath } from "../git/normalize-git-path.js";
 import type { WorktreeEntry } from "../git/worktree-entry.js";
 import { findWorktreeByPath } from "./find-worktree-by-path.js";
@@ -51,6 +50,13 @@ function expandHomeDirectory(input: string, pathApi: typeof path.posix): string 
   return pathApi.join(os.homedir(), input.slice(2));
 }
 
+function stripBranchPrefix(input: string): string {
+  return input.replace(
+    /^(?:refs\/heads\/|refs\/remotes\/origin\/|remotes\/origin\/|origin\/)/u,
+    "",
+  );
+}
+
 function containsParentDirectorySegment(input: string): boolean {
   return input.split(/[\\/]/u).includes("..");
 }
@@ -70,7 +76,7 @@ export function resolveWorktreeTarget(
     }
   }
 
-  const normalizedBranch = isPathInput ? undefined : normalizeBranchName(trimmedInput);
+  const normalizedBranch = isPathInput ? undefined : stripBranchPrefix(trimmedInput);
 
   if (normalizedBranch && containsParentDirectorySegment(normalizedBranch)) {
     return {
@@ -99,7 +105,7 @@ export function resolveWorktreeTarget(
     isPathInput || hasPathSeparator ? undefined : pathApi.join(parentDirectory, trimmedInput);
 
   if (normalizedBranch) {
-    const byBranch = worktreesByBranch.get(normalizedBranch);
+    const byBranch = worktreesByBranch.get(trimmedInput) ?? worktreesByBranch.get(normalizedBranch);
     if (byBranch) {
       return { kind: "registered", worktree: byBranch, isPathInput };
     }
