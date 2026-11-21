@@ -1,6 +1,4 @@
 import { spawnSync } from "node:child_process";
-import * as readline from "node:readline/promises";
-import { exitInterrupted } from "../cli/exit-interrupted.js";
 import { writeError } from "../cli/write-error.js";
 
 function getGitExecutable(): string {
@@ -75,19 +73,4 @@ export function exitWithMessage(message: string): never {
   writeError(message);
   // eslint-disable-next-line unicorn/no-process-exit
   process.exit(1);
-}
-
-export async function confirm(message: string): Promise<boolean> {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stderr,
-  });
-  rl.on("SIGINT", exitInterrupted);
-
-  try {
-    const answer = await rl.question(`${message} [y/N] `);
-    return answer.toLowerCase() === "y" || answer.toLowerCase() === "yes";
-  } finally {
-    rl.close();
-  }
 }
