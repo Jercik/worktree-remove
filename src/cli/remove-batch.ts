@@ -25,7 +25,7 @@ interface BatchOptions {
 
 export async function removeBatch(targets: string[], options: BatchOptions): Promise<void> {
   const { policy, output } = options;
-  const { mainPath, worktrees } = getWorktreeInfo();
+  const { mainPath, commonDir, worktrees } = getWorktreeInfo();
   const invocationCwd = process.cwd();
 
   // Phase 1: Resolve all targets and check uncommitted changes
@@ -33,6 +33,7 @@ export async function removeBatch(targets: string[], options: BatchOptions): Pro
     targets,
     cwd: invocationCwd,
     mainPath,
+    commonDir,
     worktrees,
   });
 

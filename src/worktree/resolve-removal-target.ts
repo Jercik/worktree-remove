@@ -2,6 +2,7 @@ import { lstat, realpath } from "node:fs/promises";
 import path from "node:path";
 import { exitWithMessage } from "../git/git-helpers.js";
 import { directoryExists } from "../fs/check-directory-exists.js";
+import { isLinkedWorktreeOf } from "../git/is-linked-worktree-of.js";
 import { findWorktreeByPath } from "./find-worktree-by-path.js";
 import { resolveWorktreeTarget } from "./resolve-worktree-target.js";
 import type { WorktreeEntry } from "../git/worktree-entry.js";
@@ -10,6 +11,7 @@ interface ResolveRemovalTargetInput {
   input: string;
   cwd: string;
   mainPath: string;
+  commonDir: string;
   worktrees: WorktreeEntry[];
   platform: NodeJS.Platform;
 }
@@ -86,6 +88,16 @@ export async function resolveRemovalTarget(
 
     targetPath = await resolveRealEntryPath(existingPath, pathApi);
     registeredWorktree = findWorktreeByPath(input.worktrees, targetPath, input.platform);
+
+    if (
+      !registeredWorktree &&
+      !resolvedTarget.isPathInput &&
+      !(await isLinkedWorktreeOf(targetPath, input.commonDir))
+    ) {
+      exitWithMessage(
+        `'${existingPath}' matches '${resolvedTarget.input}' but is not a worktree of this repository. Pass its path to remove it anyway.`,
+      );
+    }
   }
 
   const resolvedTargetPath = pathApi.resolve(targetPath);

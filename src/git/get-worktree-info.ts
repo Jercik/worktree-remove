@@ -1,3 +1,4 @@
+import path from "node:path";
 import { git, exitWithMessage } from "./git-helpers.js";
 import { normalizeGitPath } from "./normalize-git-path.js";
 import { parseWorktreeListPorcelain } from "./parse-worktree-list.js";
@@ -5,6 +6,7 @@ import type { WorktreeEntry } from "./worktree-entry.js";
 
 interface WorktreeInfo {
   mainPath: string;
+  commonDir: string;
   worktrees: WorktreeEntry[]; // excludes main
 }
 
@@ -37,5 +39,7 @@ export function getWorktreeInfo(): WorktreeInfo {
     path: normalizeGitPath(worktree.path),
   }));
 
-  return { mainPath, worktrees: normalizedWorktrees };
+  const commonDir = path.resolve(normalizeGitPath(git("rev-parse", "--git-common-dir")));
+
+  return { mainPath, commonDir, worktrees: normalizedWorktrees };
 }

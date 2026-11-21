@@ -6,6 +6,7 @@ import { selectWorktrees } from "./select-worktree.js";
 vi.mock(import("../git/get-worktree-info.js"), () => ({
   getWorktreeInfo: () => ({
     mainPath: "/projects/app",
+    commonDir: "/projects/app/.git",
     worktrees: [
       {
         path: "/projects/app-feature",

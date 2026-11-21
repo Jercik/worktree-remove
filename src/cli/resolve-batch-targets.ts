@@ -29,6 +29,7 @@ interface ResolveBatchInput {
   targets: string[];
   cwd: string;
   mainPath: string;
+  commonDir: string;
   worktrees: WorktreeEntry[];
 }
 
@@ -50,6 +51,7 @@ export async function resolveBatchTargets(input: ResolveBatchInput): Promise<Res
       input: trimmedInput,
       cwd: input.cwd,
       mainPath: input.mainPath,
+      commonDir: input.commonDir,
       worktrees: input.worktrees,
       platform: process.platform,
     });
