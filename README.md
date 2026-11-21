@@ -93,7 +93,7 @@ You can also specify the worktree directly by:
 - `.` (current directory — removes the worktree you are in)
 
 Note: If you pass a path that exists but isn't a registered worktree, it will be treated as an orphaned directory and moved to trash after confirmation. Path targets can point anywhere, so use caution when providing absolute or home-relative paths.
-A branch or directory name that matches no registered worktree resolves only to a leftover worktree directory of this repository; other directories are refused unless passed as a path.
+A branch or directory name that matches no registered worktree is accepted only when the directory is an orphaned worktree of this repository, whose `.git` file points into this repository. Other directories are refused; pass their path to remove them.
 For safety, unregistered directories inside the main worktree are refused.
 Locked worktrees are refused too, even with `--force`; run `git worktree unlock <path>` first.
 

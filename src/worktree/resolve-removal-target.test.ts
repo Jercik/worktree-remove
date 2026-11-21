@@ -111,6 +111,14 @@ describe("resolveRemovalTarget for a name no registered worktree matches", () =>
     runGit(mainPath, ["commit", "--quiet", "--allow-empty", "-m", "init"]);
     runGit(parentDirectory, ["init", "--quiet", "docs"]);
 
+    const otherPath = path.join(parentDirectory, "other");
+    runGit(parentDirectory, ["init", "--quiet", "other"]);
+    runGit(otherPath, ["commit", "--quiet", "--allow-empty", "-m", "init"]);
+    runGit(otherPath, ["worktree", "add", "--quiet", "-b", "stray", "../other-left"]);
+    await rename(path.join(parentDirectory, "other-left"), path.join(parentDirectory, "parked"));
+    runGit(otherPath, ["worktree", "prune"]);
+    await rename(path.join(parentDirectory, "parked"), path.join(parentDirectory, "other-left"));
+
     runGit(mainPath, ["worktree", "add", "--quiet", "-b", "left", "../app-left"]);
     await rename(path.join(parentDirectory, "app-left"), path.join(parentDirectory, "parked"));
     runGit(mainPath, ["worktree", "prune"]);
@@ -121,7 +129,7 @@ describe("resolveRemovalTarget for a name no registered worktree matches", () =>
     await rm(parentDirectory, { recursive: true, force: true });
   });
 
-  it("resolves to a leftover worktree directory of this repository", async () => {
+  it("resolves to an orphaned worktree of this repository", async () => {
     const result = await resolveRemovalTarget({
       input: "left",
       cwd: mainPath,
@@ -139,7 +147,40 @@ describe("resolveRemovalTarget for a name no registered worktree matches", () =>
     });
   });
 
-  it("refuses a sibling directory that is not a worktree of this repository", async () => {
+  it("refuses an orphaned worktree of another repository", async () => {
+    await expect(
+      resolveRemovalTarget({
+        input: "other-left",
+        cwd: mainPath,
+        mainPath,
+        commonDir: path.join(mainPath, ".git"),
+        worktrees: [],
+        platform: process.platform,
+      }),
+    ).rejects.toThrow(
+      "matches 'other-left' but is not a worktree of this repository. Pass its path to remove it anyway.",
+    );
+  });
+
+  it("resolves the main worktree's directory name to the main worktree", async () => {
+    const result = await resolveRemovalTarget({
+      input: "app",
+      cwd: mainPath,
+      mainPath,
+      commonDir: path.join(mainPath, ".git"),
+      worktrees: [],
+      platform: process.platform,
+    });
+
+    expect(result).toStrictEqual({
+      targetPath: path.join(parentDirectory, "app"),
+      registeredPath: undefined,
+      registeredWorktree: undefined,
+      isPathInputTarget: false,
+    });
+  });
+
+  it("refuses a sibling repository's main checkout", async () => {
     await expect(
       resolveRemovalTarget({
         input: "docs",
