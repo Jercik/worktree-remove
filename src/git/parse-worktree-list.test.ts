@@ -107,6 +107,34 @@ detached\t
     });
   });
 
+  it("keeps a local branch name that looks like a remote-tracking ref", () => {
+    const output = `worktree /repo/wt-origin
+HEAD 4444444444444444444444444444444444444444
+branch refs/heads/origin/foo
+
+worktree /repo/wt-remotes
+HEAD 5555555555555555555555555555555555555555
+branch refs/heads/remotes/origin/bar
+`;
+
+    expect(parseWorktreeListPorcelain(output).worktrees).toStrictEqual([
+      {
+        path: "/repo/wt-origin",
+        head: "4444444444444444444444444444444444444444",
+        branch: "origin/foo",
+        isDetached: false,
+        lock: undefined,
+      },
+      {
+        path: "/repo/wt-remotes",
+        head: "5555555555555555555555555555555555555555",
+        branch: "remotes/origin/bar",
+        isDetached: false,
+        lock: undefined,
+      },
+    ]);
+  });
+
   it("returns empty result for empty output", () => {
     expect(parseWorktreeListPorcelain("")).toStrictEqual({
       mainPath: "",

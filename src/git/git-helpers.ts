@@ -61,12 +61,9 @@ export function git(...arguments_: [...string[], { cwd?: string }] | string[]): 
 }
 
 export function normalizeBranchName(name: string): string {
-  const trimmed = name.trim();
-  return trimmed
-    .replace(/^refs\/heads\//u, "")
-    .replace(/^refs\/remotes\/origin\//u, "")
-    .replace(/^remotes\/origin\//u, "")
-    .replace(/^origin\//u, "");
+  return name
+    .trim()
+    .replace(/^(?:refs\/heads\/|refs\/remotes\/origin\/|remotes\/origin\/|origin\/)/u, "");
 }
 
 export function exitWithMessage(message: string): never {
