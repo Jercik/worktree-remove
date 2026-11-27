@@ -3,7 +3,7 @@
  */
 
 import path from "node:path";
-import { checkbox } from "@inquirer/prompts";
+import checkbox from "@inquirer/checkbox";
 import { getWorktreeInfo } from "../git/get-worktree-info.js";
 import { exitInterrupted } from "./exit-interrupted.js";
 import type { OutputWriter } from "./output-writer.js";
